@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>PermiGAO — Apprend. Joue. Réussis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --asphalte:rgb(248, 242, 242);
+    --asphalte-2:#111111;
+    --asphalte-3:#1E1E1E;
+    --blanc-route:#FFFFFF;
+    --jaune:#39FF14;
+    --jaune-dim:#1FAA0A;
+    --vert:#39FF14;
+    --vert-dim:#1FAA0A;
+    --vert-fonce:#0B3D0B;
+    --rouge:#FF1111;
+    --rouge-dim:#C40D0D;
+    --rouge-fonce:#5A0000;
+    --gris:#9AA0A6;
+    --bleu:#1F5FA8;
+    --signal:#FFD600;
+    --signal-dim:#C7A600;
+    --radius:16px;
+    --shadow:0 10px 30px rgba(0,0,0,.55);
+    --glass-bg:rgba(10,10,10,.55);
+    --glass-border:rgba(57,255,20,.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(57,255,20,.10), transparent 60%),
+      radial-gradient(ellipse 700px 400px at 100% 100%, rgba(255,17,17,.10), transparent 60%),
+      linear-gradient(180deg, #0c0f0a 0%, #060606 40%, #050505 100%);
+    background-attachment:fixed;
+    color:var(--blanc-route);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  /* ---- ROUTE BACKDROP (CSS-generated, dark & blurred) ---- */
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(5,5,5,.75) 0%, rgba(5,5,5,.55) 40%, rgba(5,5,5,.88) 100%),
+      repeating-linear-gradient(100deg, transparent 0 140px, rgba(57,255,20,.05) 140px 142px),
+      repeating-linear-gradient(80deg, transparent 0 220px, rgba(255,17,17,.045) 220px 222px),
+      linear-gradient(200deg, #1a1e18 0%, #0d0f0c 35%, #050505 70%);
+    filter:blur(1.5px);
+  }
+  body::after{
+    content:''; position:fixed; left:50%; bottom:-10%; width:140vw; height:70vh; z-index:0; pointer-events:none;
+    transform:translateX(-50%) perspective(400px) rotateX(35deg);
+    background:
+      repeating-linear-gradient(90deg, transparent 0 64px, rgba(255,255,255,.16) 64px 70px, transparent 70px 134px),
+      #0a0a0a;
+    opacity:.35;
+  }
+  h1,h2,h3,.display{font-family:'Oswald',sans-serif; letter-spacing:.02em; text-transform:uppercase;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  button{font-family:inherit; cursor:pointer;}
+  #app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative; z-index:1;}
+
+  /* ---- TOP BAR ---- */
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(6,7,6,.72);
+    backdrop-filter:blur(14px) saturate(140%); -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border-bottom:1px solid rgba(57,255,20,.14);
+    padding:14px 16px 8px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .topbar .brand{
+    display:flex; align-items:center; gap:8px; font-family:'Oswald'; font-weight:700; font-size:15px; letter-spacing:.03em;
+    color:var(--jaune); cursor:pointer; white-space:nowrap; text-shadow:0 0 12px rgba(57,255,20,.45);
+  }
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--rouge);box-shadow:0 0 0 3px rgba(214,41,62,.25);}
+  .xp-track{
+    flex:1; height:10px; border-radius:6px; background:var(--asphalte-3);
+    position:relative; overflow:hidden; border:1px solid #000;
+  }
+  .xp-track::before{
+    content:''; position:absolute; inset:0;
+    background-image:repeating-linear-gradient(90deg, var(--asphalte-3) 0 10px, #202325 10px 12px);
+  }
+  .xp-fill{
+    position:relative; height:100%; background:linear-gradient(90deg, var(--jaune-dim), var(--jaune));
+    border-radius:6px; transition:width .5s ease;
+  }
+  .xp-car{position:absolute; top:-11px; font-size:14px; transform:translateX(-50%); transition:left .5s ease;}
+  .xp-label{font-size:11px; color:var(--gris); white-space:nowrap;}
+
+  /* ---- SCREENS ---- */
+  .screen{display:none; padding:8px 18px 90px; flex:1; animation:fadeIn .25s ease;}
+  .screen.active{display:block;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ---- GLASS CONTAINER ---- */
+  .glass{
+    background:var(--glass-bg);
+    backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%);
+    border:1px solid var(--glass-border);
+    border-radius:22px;
+    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .glow-green{box-shadow:0 0 24px rgba(57,255,20,.22);}
+  .glow-red{box-shadow:0 0 24px rgba(255,17,17,.22);}
+
+  /* ---- HOME / AMRCOR BRAND ---- */
+  .amrcor-logo{text-align:center; padding:22px 6px 18px;}
+  .amrcor-crest{font-size:30px; margin-bottom:4px; filter:drop-shadow(0 0 10px rgba(57,255,20,.5));}
+  .amrcor-word{
+    font-family:'Oswald'; font-weight:700; font-size:40px; letter-spacing:.04em; margin:0;
+    color:var(--vert); text-shadow:0 0 18px rgba(57,255,20,.55), 0 0 40px rgba(57,255,20,.25);
+  }
+  .amrcor-word .o-wheel{font-size:30px; vertical-align:middle; filter:drop-shadow(0 0 10px rgba(255,17,17,.7));}
+  .amrcor-tag{color:var(--blanc-route); font-size:12px; letter-spacing:.12em; text-transform:uppercase; font-weight:600; margin-top:8px; line-height:1.6; opacity:.9;}
+  .amrcor-motto{color:var(--gris); font-size:13px; margin-top:10px; font-style:italic;}
+  .amrcor-slogan{color:var(--signal); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-top:12px;}
+  .amrcor-slogan .dot{color:var(--vert); margin:0 3px;}
+
+  .hero{padding:18px 4px 8px;}
+  .hero .eyebrow{color:var(--jaune); font-size:12px; letter-spacing:.15em; font-weight:600; text-transform:uppercase;}
+  .hero h1{font-size:34px; line-height:1.02; margin:6px 0 4px; color:var(--blanc-route);}
+  .hero h1 span{color:var(--jaune);}
+  .hero p{color:var(--gris); font-size:14px; margin:0 0 18px; line-height:1.5;}
+
+  /* ---- CTA BUTTONS (Code à distance / Admin) ---- */
+  .cta-stack{display:flex; flex-direction:column; gap:14px; margin:6px 0 18px;}
+  .cta-btn{
+    display:flex; align-items:center; gap:14px; width:100%; border:none; border-radius:20px;
+    padding:18px 18px; text-align:left; color:#fff; position:relative; overflow:hidden;
+    transition:transform .12s ease;
+  }
+  .cta-btn:active{transform:scale(.97);}
+  .cta-icon{
+    width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,.16); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .cta-text{flex:1; min-width:0;}
+  .cta-title{display:block; font-family:'Oswald'; font-weight:700; font-size:19px; text-transform:uppercase; letter-spacing:.02em;}
+  .cta-sub{display:block; font-size:12.5px; color:rgba(255,255,255,.85); margin-top:2px;}
+  .cta-arrow{font-size:24px; opacity:.85;}
+  .cta-green{background:linear-gradient(135deg, #4dff26, var(--vert-dim)); box-shadow:0 10px 26px rgba(57,255,20,.28);}
+  .cta-red{background:linear-gradient(135deg, #ff3b3b, var(--rouge-dim)); box-shadow:0 10px 26px rgba(255,17,17,.28);}
+
+  .mini-stats{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:14px 6px; border-radius:16px; margin-bottom:8px;
+  }
+  .mstat{text-align:center; display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .mstat .em{font-size:16px;}
+  .mstat .v{font-family:'Oswald'; font-weight:700; font-size:16px; color:var(--vert);}
+  .mstat .l{font-size:9px; color:var(--gris); text-transform:uppercase; letter-spacing:.05em;}
+
+  .apprenez-reussissez{
+    display:flex; align-items:center; justify-content:center; gap:10px; margin-top:20px; padding:14px;
+    border-radius:16px; background:linear-gradient(90deg, rgba(57,255,20,.16), rgba(255,17,17,.16));
+    border:1px solid rgba(255,255,255,.08); font-family:'Oswald'; font-weight:600; font-size:12.5px;
+    text-transform:uppercase; letter-spacing:.05em;
+  }
+  .ar-green{color:var(--vert);}
+  .ar-red{color:var(--rouge);}
+  .ar-sep{color:var(--gris); opacity:.4;}
+
+  .card-btn.accent-green{border-top:3px solid var(--vert);}
+  .card-btn.accent-signal{border-top:3px solid var(--signal);}
+
+  .road-gauge{
+    height:54px; border-radius:12px; background:var(--asphalte-2); position:relative; overflow:hidden;
+    border:1px solid #000; margin-bottom:20px;
+  }
+  .road-gauge .lane{
+    position:absolute; top:50%; left:0; right:0; height:4px; transform:translateY(-50%);
+    background-image:repeating-linear-gradient(90deg, var(--jaune) 0 22px, transparent 22px 40px);
+    opacity:.55;
+  }
+  .road-gauge .car{position:absolute; top:50%; transform:translate(-50%,-50%); font-size:22px; transition:left .6s ease; filter:drop-shadow(0 3px 4px rgba(0,0,0,.5));}
+  .road-gauge .rank-tag{position:absolute; right:12px; top:8px; font-size:11px; color:var(--gris);}
+  .road-gauge .rank-name{position:absolute; left:12px; top:8px; font-size:11px; font-weight:700; color:var(--jaune); text-transform:uppercase; letter-spacing:.05em;}
+
+  .grid-cards{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .card-btn{
+    background:rgba(17,17,17,.65); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.06); border-radius:var(--radius);
+    padding:16px 14px; text-align:left; color:var(--blanc-route); position:relative; overflow:hidden;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .card-btn:active{transform:scale(.97);}
+  .card-btn .icon{font-size:24px; display:block; margin-bottom:10px;}
+  .card-btn .label{font-family:'Oswald'; font-weight:600; font-size:15px; text-transform:uppercase; letter-spacing:.02em; display:block;}
+  .card-btn .sub{color:var(--gris); font-size:11px; margin-top:3px; display:block;}
+  .card-btn.primary{background:linear-gradient(135deg, var(--vert), var(--vert-dim)); grid-column:1/-1;}
+  .card-btn.primary .label{color:#fff;}
+  .card-btn.primary .sub{color:rgba(255,255,255,.75);}
+  .card-btn.accent-yellow{border-top:3px solid var(--jaune);}
+  .card-btn.accent-red{border-top:3px solid var(--rouge);}
+  .card-btn.accent-blue{border-top:3px solid var(--bleu);}
+  .card-btn.accent-gray{border-top:3px solid var(--gris);}
+
+  .section-title{
+    font-size:12px; letter-spacing:.14em; color:var(--gris); text-transform:uppercase; font-weight:700;
+    margin:26px 0 12px; display:flex; align-items:center; gap:8px;
+  }
+  .section-title::after{content:''; flex:1; height:1px; background:repeating-linear-gradient(90deg, var(--jaune) 0 6px, transparent 6px 12px); opacity:.4;}
+
+  /* ---- BACK / HEADER ROW ---- */
+  .row-header{display:flex; align-items:center; gap:10px; margin:10px 0 18px;}
+  .back-btn{
+    background:var(--asphalte-2); border:1px solid #000; color:var(--blanc-route); width:36px; height:36px;
+    border-radius:10px; font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .row-header h2{margin:0; font-size:19px;}
+  .row-header .sub{color:var(--gris); font-size:12px; margin:2px 0 0;}
+
+  /* ---- CATEGORY SELECT ---- */
+  .cat-list{display:flex; flex-direction:column; gap:10px;}
+  .cat-item{
+    background:var(--asphalte-2); border:1px solid #000; border-radius:14px; padding:14px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .cat-item .badge-shape{
+    width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    font-size:22px; flex-shrink:0;
+  }
+  .cat-item .info{flex:1; min-width:0;}
+  .cat-item .info .name{font-family:'Oswald'; font-weight:600; font-size:15px; text-transform:uppercase;}
+  .cat-item .info .prog-bar{height:6px; border-radius:4px; background:var(--asphalte-3); margin-top:8px; overflow:hidden;}
+  .cat-item .info .prog-fill{height:100%; background:var(--jaune); border-radius:4px;}
+  .cat-item .info .prog-txt{font-size:11px; color:var(--gris); margin-top:5px;}
+  .cat-item .go{color:var(--jaune); font-size:20px;}
+
+  /* ---- QUIZ ---- */
+  .quiz-topline{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .pill{
+    background:var(--asphalte-2); border:1px solid #000; border-radius:20px; padding:5px 12px;
+    font-size:12px; font-weight:600; color:var(--gris); display:flex; align-items:center; gap:6px;
+  }
+  .pill.timer{color:var(--signal); font-family:'JetBrains Mono';}
+  .pill.streak{color:var(--jaune);}
+  .q-progress{height:5px; background:var(--asphalte-3); border-radius:4px; overflow:hidden; margin-bottom:18px;}
+  .q-progress-fill{height:100%; background:var(--jaune); transition:width .3s ease;}
+
+  .q-visual-wrap{display:flex; justify-content:center; padding:18px 0 6px;}
+  .sign-triangle, .sign-triangle-inv, .sign-circle-red, .sign-circle-blue, .sign-rect-blue, .sign-octagon{
+    display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800;
+  }
+  .sign-triangle{
+    width:0; height:0; border-left:52px solid transparent; border-right:52px solid transparent;
+    border-bottom:90px solid var(--rouge); position:relative;
+  }
+  .sign-triangle .inner{
+    position:absolute; top:34px; left:-38px; width:76px; height:46px; background:#fff; clip-path:polygon(50% 0,100% 100%,0 100%);
+    display:flex; align-items:center; justify-content:center; color:var(--asphalte); font-size:24px;
+  }
+  .sign-triangle-inv{
+    width:0; height:0; border-left:52px solid transparent; border-right:52px solid transparent;
+    border-top:90px solid var(--rouge); position:relative;
+  }
+  .sign-triangle-inv .inner{
+    position:absolute; bottom:34px; left:-38px; width:76px; height:46px; background:#fff; clip-path:polygon(0 0,100% 0,50% 100%);
+    display:flex; align-items:center; justify-content:center; color:var(--asphalte); font-size:24px;
+  }
+  .sign-circle-red{width:104px; height:104px; border-radius:50%; background:#fff; border:8px solid var(--rouge); color:var(--asphalte);}
+  .sign-circle-blue{width:104px; height:104px; border-radius:50%; background:var(--bleu); border:3px solid #fff; color:#fff;}
+  .sign-rect-blue{width:104px; height:80px; border-radius:6px; background:var(--bleu); border:3px solid #fff; color:#fff;}
+  .sign-octagon{
+    width:100px; height:100px; background:var(--rouge); color:#fff; border:3px solid #fff;
+    clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+    font-size:20px; font-weight:800; letter-spacing:.05em;
+  }
+  .voyant-visual{
+    width:104px; height:104px; border-radius:20px; display:flex; align-items:center; justify-content:center;
+    font-size:46px; background:radial-gradient(circle at 50% 40%, #2c2f32, #101214); border:1px solid #000;
+  }
+  .voyant-visual.on{box-shadow:0 0 26px 4px var(--glow, rgba(214,41,62,.55));}
+  .scenario-visual{
+    width:100%; max-width:340px; border-radius:14px; background:var(--asphalte-2); border:1px solid #000;
+    padding:18px; text-align:center; font-size:40px; line-height:1.3;
+  }
+
+  .q-prompt{font-size:17px; font-weight:600; text-align:center; margin:16px 4px 4px; line-height:1.4;}
+  .q-hint{text-align:center; color:var(--gris); font-size:12px; margin:4px 0 18px;}
+
+  .options{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
+  .option{
+    background:var(--asphalte-2); border:1.5px solid #000; border-radius:12px; padding:13px 14px;
+    text-align:left; color:var(--blanc-route); font-size:14px; font-weight:500; display:flex; align-items:center; gap:10px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .option .check{
+    width:20px; height:20px; border-radius:6px; border:2px solid var(--gris); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:transparent;
+  }
+  .option.selected{border-color:var(--jaune); background:#33301f;}
+  .option.selected .check{border-color:var(--jaune); color:var(--jaune); background:rgba(244,196,48,.15);}
+  .option.correct{border-color:var(--vert); background:#15301f;}
+  .option.correct .check{border-color:var(--vert); color:var(--vert); background:rgba(18,162,91,.18);}
+  .option.wrong{border-color:var(--rouge); background:#341a1e;}
+  .option.wrong .check{border-color:var(--rouge); color:var(--rouge); background:rgba(214,41,62,.18);}
+  .option:disabled{opacity:1;}
+
+  .btn{
+    width:100%; padding:15px; border-radius:12px; border:none; font-family:'Oswald'; font-weight:600;
+    font-size:14px; text-transform:uppercase; letter-spacing:.04em;
+  }
+  .btn-primary{background:var(--jaune); color:var(--asphalte);}
+  .btn-primary:disabled{background:var(--asphalte-3); color:var(--gris);}
+  .btn-ghost{background:transparent; border:1.5px solid var(--asphalte-3); color:var(--blanc-route);}
+
+  .feedback-banner{
+    border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:13px; line-height:1.5; display:none;
+  }
+  .feedback-banner.show{display:block; animation:fadeIn .2s ease;}
+  .feedback-banner.ok{background:#15301f; border:1px solid var(--vert); color:#bdf2d3;}
+  .feedback-banner.ko{background:#341a1e; border:1px solid var(--rouge); color:#f4c3ca;}
+  .feedback-banner b{display:block; font-family:'Oswald'; text-transform:uppercase; margin-bottom:3px; letter-spacing:.03em;}
+
+  /* ---- RESULTS ---- */
+  .result-hero{text-align:center; padding:20px 0 6px;}
+  .result-hero .score-circle{
+    width:150px; height:150px; border-radius:50%; margin:0 auto 16px; position:relative;
+    background:conic-gradient(var(--jaune) calc(var(--pct,0)*1%), var(--asphalte-3) 0);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .result-hero .score-circle::before{content:''; position:absolute; inset:9px; border-radius:50%; background:var(--asphalte);}
+  .result-hero .score-circle .num{position:relative; font-family:'Oswald'; font-size:30px; font-weight:700;}
+  .result-hero .score-circle .num small{display:block; font-size:11px; color:var(--gris); font-weight:400; letter-spacing:.08em; text-transform:uppercase;}
+  .result-hero h2{margin:6px 0 4px;}
+  .result-hero p{color:var(--gris); font-size:13px; margin:0;}
+  .result-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:20px 0;}
+  .rstat{background:var(--asphalte-2); border:1px solid #000; border-radius:12px; padding:12px 8px; text-align:center;}
+  .rstat .v{font-family:'JetBrains Mono'; font-weight:700; font-size:18px; color:var(--jaune);}
+  .rstat .l{font-size:10px; color:var(--gris); text-transform:uppercase; letter-spacing:.06em; margin-top:3px;}
+  .badge-earned{
+    display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#33301f,#26240f);
+    border:1px solid var(--jaune); border-radius:12px; padding:12px; margin-bottom:10px;
+  }
+  .badge-earned .em{font-size:24px;}
+  .badge-earned .t{font-family:'Oswald'; font-size:13px; text-transform:uppercase; color:var(--jaune);}
+  .badge-earned .d{font-size:11px; color:var(--gris);}
+  .correction-list{margin-top:22px;}
+  .correction-item{background:var(--asphalte-2); border:1px solid #000; border-radius:12px; padding:12px 14px; margin-bottom:8px;}
+  .correction-item .qtxt{font-size:13px; font-weight:600; margin-bottom:6px;}
+  .correction-item .line{font-size:12px; margin:3px 0; display:flex; gap:6px;}
+  .correction-item .line.your{color:var(--rouge);}
+  .correction-item .line.right{color:var(--vert);}
+  .btn-row{display:flex; gap:10px; margin-top:18px;}
+
+  /* ---- STATS ---- */
+  .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:22px;}
+  .stat-box{background:var(--asphalte-2); border:1px solid #000; border-radius:14px; padding:16px;}
+  .stat-box .v{font-family:'Oswald'; font-size:26px; font-weight:700; color:var(--jaune);}
+  .stat-box .l{font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.05em; margin-top:4px;}
+  .history-item{
+    display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--asphalte-3); font-size:13px;
+  }
+  .history-item .h-cat{font-weight:600;}
+  .history-item .h-date{color:var(--gris); font-size:11px;}
+  .history-item .h-score{font-family:'JetBrains Mono'; color:var(--jaune); font-weight:700;}
+  .empty-state{text-align:center; color:var(--gris); font-size:13px; padding:30px 10px;}
+
+  /* ---- PROFILE ---- */
+  .rank-hero{text-align:center; padding:14px 0 22px;}
+  .rank-hero .badge-shape{
+    width:100px; height:100px; border-radius:26px; margin:0 auto 14px; display:flex; align-items:center; justify-content:center;
+    font-size:44px; background:linear-gradient(135deg,var(--jaune),var(--jaune-dim)); box-shadow:0 10px 24px rgba(244,196,48,.25);
+  }
+  .badges-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .badge-tile{
+    background:var(--asphalte-2); border:1px solid #000; border-radius:14px; padding:14px 8px; text-align:center; opacity:.35;
+  }
+  .badge-tile.unlocked{opacity:1; border-color:var(--jaune);}
+  .badge-tile .em{font-size:26px; display:block; margin-bottom:6px;}
+  .badge-tile .t{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+
+  /* ---- BOTTOM NAV ---- */
+  .bottomnav{
+    position:sticky; bottom:0; left:0; right:0; background:rgba(6,7,6,.78);
+    backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%);
+    border-top:1px solid rgba(57,255,20,.14);
+    display:flex; justify-content:space-around; padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  }
+  .nav-btn{background:none; border:none; color:var(--gris); display:flex; flex-direction:column; align-items:center; gap:2px; font-size:8.5px; text-transform:uppercase; letter-spacing:.02em; padding:4px 2px;}
+  .nav-btn .em{font-size:16px;}
+  .nav-btn.active{color:var(--vert); text-shadow:0 0 10px rgba(57,255,20,.6);}
+
+  .toast{
+    position:fixed; top:14px; left:50%; transform:translateX(-50%); background:var(--signal); color:var(--asphalte);
+    font-family:'Oswald'; font-weight:700; font-size:13px; padding:9px 18px; border-radius:30px; z-index:99;
+    box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .25s ease, top .25s ease;
+    text-transform:uppercase; letter-spacing:.03em;
+  }
+  .toast.show{opacity:1; top:24px;}
+
+  /* ---- TOPBAR SOUND/SETTINGS BUTTON ---- */
+  .icon-btn{
+    background:rgba(255,255,255,.05); border:1px solid rgba(57,255,20,.2); color:var(--blanc-route); width:34px; height:34px;
+    border-radius:10px; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .icon-btn.muted{color:var(--gris); opacity:.5;}
+
+  /* ---- SETTINGS ---- */
+  .settings-group{background:var(--asphalte-2); border:1px solid #000; border-radius:14px; padding:6px 14px; margin-bottom:16px;}
+  .settings-row{display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--asphalte-3);}
+  .settings-row:last-child{border-bottom:none;}
+  .settings-row .s-info{display:flex; align-items:center; gap:12px;}
+  .settings-row .s-em{font-size:19px;}
+  .settings-row .s-name{font-weight:600; font-size:14px;}
+  .settings-row .s-desc{font-size:11px; color:var(--gris); margin-top:2px;}
+  .switch{width:44px; height:26px; border-radius:14px; background:var(--asphalte-3); border:1px solid #000; position:relative; flex-shrink:0;}
+  .switch::after{content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:var(--gris); transition:left .18s ease, background .18s ease;}
+  .switch.on{background:rgba(18,162,91,.35); border-color:var(--vert);}
+  .switch.on::after{left:20px; background:var(--vert);}
+  .vol-row{padding:14px 0 18px;}
+  .vol-row input[type=range]{width:100%; accent-color:var(--jaune); background:transparent;}
+  .settings-note{font-size:11px; color:var(--gris); line-height:1.6; padding:4px 4px 18px;}
+
+  /* ---- SIMULATION MODE ---- */
+  .sim-scene{
+    border-radius:18px; overflow:hidden; position:relative; min-height:220px; margin-bottom:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    border:1px solid #000; transition:background .3s ease;
+  }
+  .sim-scene.scene-route{background:linear-gradient(180deg,#3a3d40 0%, #202325 55%, #16181a 100%);}
+  .sim-scene.scene-intersection{background:linear-gradient(180deg,#3a3d40 0%, #24272a 100%);}
+  .sim-scene.scene-feu{background:linear-gradient(180deg,#3a2020 0%, #201213 100%);}
+  .sim-scene.scene-rondpoint{background:linear-gradient(180deg,#203a2a 0%, #14201a 100%);}
+  .sim-scene.scene-pluie{background:linear-gradient(180deg,#20262e 0%, #14181d 100%);}
+  .sim-scene.scene-nuit{background:linear-gradient(180deg,#0e1016 0%, #05060a 100%);}
+  .sim-scene .road-strip{
+    position:absolute; bottom:0; left:0; right:0; height:70px; background:#16181a;
+    background-image:repeating-linear-gradient(90deg, var(--jaune) 0 26px, transparent 26px 52px);
+    background-position:0 50%; background-size:100% 5px; background-repeat:repeat-x;
+  }
+  .sim-scene .rain-drop{position:absolute; width:2px; height:14px; background:rgba(180,200,255,.5); animation:rainFall 1s linear infinite;}
+  @keyframes rainFall{from{transform:translateY(-20px);} to{transform:translateY(240px);}}
+  .sim-scene .sim-emoji{font-size:52px; z-index:2; filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));}
+  .sim-scene .sim-caption{z-index:2; color:#fff; font-size:12px; margin-top:8px; background:rgba(0,0,0,.35); padding:4px 10px; border-radius:20px;}
+  .sim-timer-bar{height:8px; border-radius:6px; background:var(--asphalte-3); overflow:hidden; margin-bottom:16px; border:1px solid #000;}
+  .sim-timer-fill{height:100%; background:linear-gradient(90deg, var(--vert), var(--jaune), var(--rouge)); transition:width .1s linear;}
+  .sim-lives{display:flex; gap:4px; justify-content:center; margin-bottom:6px; font-size:16px;}
+  .sim-options{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .sim-options .option{justify-content:center; text-align:center;}
+  .sim-score-hero{text-align:center; padding:24px 0;}
+  .sim-score-hero .big{font-family:'Oswald'; font-size:44px; font-weight:700; color:var(--jaune);}
+
+  /* ---- WEAK CHAPTERS / MASTERY ---- */
+  .weak-item{display:flex; align-items:center; gap:10px; background:var(--asphalte-2); border:1px solid #000; border-radius:12px; padding:10px 12px; margin-bottom:8px;}
+  .weak-item .wc-icon{font-size:18px;}
+  .weak-item .wc-info{flex:1;}
+  .weak-item .wc-name{font-size:13px; font-weight:600;}
+  .weak-item .wc-bar{height:5px; border-radius:4px; background:var(--asphalte-3); margin-top:5px; overflow:hidden;}
+  .weak-item .wc-fill{height:100%; background:var(--signal);}
+  .weak-item .wc-pct{font-family:'JetBrains Mono'; font-size:12px; color:var(--signal); font-weight:700;}
+  .reco-box{background:linear-gradient(135deg,#20241a,#181c14); border:1px solid var(--vert); border-radius:12px; padding:13px 14px; font-size:12.5px; line-height:1.6; margin-top:14px;}
+  .reco-box b{color:var(--jaune); display:block; font-family:'Oswald'; text-transform:uppercase; font-size:11px; letter-spacing:.05em; margin-bottom:4px;}
+
+  /* ---- LEVEL CARD (profile) ---- */
+  .level-card{background:var(--asphalte-2); border:1px solid #000; border-radius:16px; padding:18px; margin-bottom:20px;}
+  .level-card .lc-top{display:flex; justify-content:space-between; align-items:baseline;}
+  .level-card .lc-level{font-family:'Oswald'; font-size:22px; font-weight:700; color:var(--jaune);}
+  .level-card .lc-rank{font-size:12px; color:var(--gris); text-transform:uppercase; letter-spacing:.05em;}
+  .level-card .lc-bar{height:9px; border-radius:6px; background:var(--asphalte-3); margin:12px 0 6px; overflow:hidden;}
+  .level-card .lc-fill{height:100%; background:linear-gradient(90deg,var(--jaune-dim),var(--jaune));}
+  .level-card .lc-bottom{display:flex; justify-content:space-between; font-size:11px; color:var(--gris);}
+  .level-card .lc-streak{color:var(--jaune); font-weight:700;}
+
+  /* ---- MICRO ANIMATIONS ---- */
+  @keyframes shakeX{10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);}}
+  .shake{animation:shakeX .5s cubic-bezier(.36,.07,.19,.97);}
+  @keyframes pulseGood{0%{box-shadow:0 0 0 0 rgba(18,162,91,.5);} 100%{box-shadow:0 0 0 14px rgba(18,162,91,0);}}
+  .pulse-good{animation:pulseGood .6s ease-out;}
+  @keyframes popIn{from{transform:scale(.85); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .pop-in{animation:popIn .3s cubic-bezier(.34,1.56,.64,1);}
+
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important;} }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar" id="topbar">
+    <div class="brand" onclick="goHome()">🚦 <span>AMRCOR</span></div>
+    <div style="flex:1">
+      <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div><div class="xp-car" id="xpCar" style="left:0%">🚗</div></div>
+      <div class="xp-label" id="xpLabel">0 XP · Débutant</div>
+    </div>
+    <button class="icon-btn" id="voiceToggleBtn" onclick="toggleVoiceQuick()" title="Activer/désactiver la voix">🔊</button>
+    <button class="icon-btn" onclick="showSettings()" title="Réglages audio">⚙️</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="amrcor-logo">
+      <div class="amrcor-crest">🛣️</div>
+      <h1 class="amrcor-word">AMRC<span class="o-wheel">🔴</span>R</h1>
+      <div class="amrcor-tag">Assistance à la maîtrise rapide<br>du code de la route</div>
+      <div class="amrcor-motto">Votre réussite, notre priorité !</div>
+      <div class="amrcor-slogan">Apprenez <span class="dot">·</span> Entraînez-vous <span class="dot">·</span> Simulez <span class="dot">·</span> Réussissez</div>
+    </div>
+
+    <div class="road-gauge glass">
+      <div class="lane"></div>
+      <div class="rank-name" id="gaugeRank">Débutant</div>
+      <div class="rank-tag" id="gaugeXp">0 XP</div>
+      <div class="car" id="gaugeCar" style="left:6%">🚗</div>
+    </div>
+
+    <div class="cta-stack">
+      <button class="cta-btn cta-green" onclick="showCategories('training')">
+        <span class="cta-icon">📖</span>
+        <span class="cta-text"><span class="cta-title">Code à distance</span><span class="cta-sub">Entraînez-vous et réussissez</span></span>
+        <span class="cta-arrow">›</span>
+      </button>
+      <button class="cta-btn cta-red" onclick="showAdmin()">
+        <span class="cta-icon">🛡️</span>
+        <span class="cta-text"><span class="cta-title">Admin</span><span class="cta-sub">Espace administrateur</span></span>
+        <span class="cta-arrow">›</span>
+      </button>
+    </div>
+
+    <div class="mini-stats glass">
+      <div class="mstat"><span class="em">📚</span><span class="v" id="statCatCount">0</span><span class="l">Thèmes</span></div>
+      <div class="mstat"><span class="em">🏆</span><span class="v" id="statBadgeCount">0</span><span class="l">Badges</span></div>
+      <div class="mstat"><span class="em">⏱️</span><span class="v">24/7</span><span class="l">Accessible</span></div>
+      <div class="mstat"><span class="em">❓</span><span class="v" id="statQCount">0</span><span class="l">Questions</span></div>
+    </div>
+
+    <div class="section-title">Autres modes</div>
+    <div class="grid-cards">
+      <button class="card-btn accent-red" onclick="startExam()">
+        <span class="icon">⏱️</span>
+        <span class="label">Mode Examen</span>
+        <span class="sub">40 questions chronométrées</span>
+      </button>
+      <button class="card-btn accent-signal" onclick="startDailyChallenge()">
+        <span class="icon">🔥</span>
+        <span class="label">Défi du jour</span>
+        <span class="sub" id="dailyStatus">10 questions bonus</span>
+      </button>
+      <button class="card-btn primary" style="grid-column:1/-1;" onclick="startSimulation()">
+        <span class="icon">🌆</span>
+        <span class="label">Mode Simulation</span>
+        <span class="sub">Décide vite, comme au volant</span>
+      </button>
+      <button class="card-btn accent-gray" onclick="showStats()">
+        <span class="icon">📊</span>
+        <span class="label">Statistiques</span>
+        <span class="sub">Ta progression</span>
+      </button>
+      <button class="card-btn accent-gray" onclick="showProfile()">
+        <span class="icon">🏅</span>
+        <span class="label">Mon niveau</span>
+        <span class="sub">Grade &amp; badges</span>
+      </button>
+      <button class="card-btn accent-green" onclick="showCoach()">
+        <span class="icon">🧠</span>
+        <span class="label">Coach intelligent</span>
+        <span class="sub">Analyse &amp; recommandations</span>
+      </button>
+      <button class="card-btn accent-signal" onclick="showLeaderboard()">
+        <span class="icon">🏆</span>
+        <span class="label">Classement</span>
+        <span class="sub">Ton aperçu local</span>
+      </button>
+    </div>
+
+    <div class="apprenez-reussissez">
+      <span class="ar-half ar-green">✅ Apprenez</span>
+      <span class="ar-sep">┃</span>
+      <span class="ar-half ar-red">🏁 Réussissez</span>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="screen" id="screen-admin">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Admin</h2><div class="sub">Espace administrateur</div></div>
+    </div>
+    <div class="grid-cards">
+      <button class="card-btn accent-red" onclick="showStats()"><span class="icon">📊</span><span class="label">Statistiques</span><span class="sub">Vue d'ensemble</span></button>
+      <button class="card-btn accent-red" onclick="showProfile()"><span class="icon">🏅</span><span class="label">Badges</span><span class="sub">Progression &amp; grades</span></button>
+      <button class="card-btn accent-red" onclick="showSettings()"><span class="icon">⚙️</span><span class="label">Réglages</span><span class="sub">Audio &amp; accessibilité</span></button>
+      <button class="card-btn accent-red" onclick="adminResetProgress()"><span class="icon">♻️</span><span class="label">Réinitialiser</span><span class="sub">Effacer la progression</span></button>
+      <button class="card-btn accent-red" style="grid-column:1/-1;" onclick="showAdminQuestions()"><span class="icon">📝</span><span class="label">Gestion des questions</span><span class="sub">Ajouter / modifier / supprimer</span></button>
+    </div>
+    <div class="section-title">Contenu de la banque</div>
+    <div class="stat-grid" id="adminContentGrid"></div>
+  </div>
+
+  <!-- ADMIN — GESTION DES QUESTIONS -->
+  <div class="screen" id="screen-admin-questions">
+    <div class="row-header">
+      <button class="back-btn" onclick="showAdmin()">←</button>
+      <div><h2>Questions</h2><div class="sub">Ajouter, modifier, supprimer</div></div>
+    </div>
+    <div class="glass" style="padding:10px 12px; margin-bottom:14px; font-size:11px; color:var(--gris); line-height:1.5;">
+      ⚠️ Ce prototype n'a pas de serveur : les modifications restent en mémoire pendant cette session et seront perdues au rechargement de la page. L'architecture (objet <span class="mono">QUESTIONS</span>) est prête à être branchée sur une vraie base de données.
+    </div>
+    <div class="settings-row" style="border:none; padding:0 0 12px;">
+      <div class="s-info"><span class="s-em">🗂️</span><div><div class="s-name">Catégorie</div></div></div>
+      <select id="adminCatSelect" onchange="renderAdminQuestionList()" style="background:var(--asphalte-2); color:#fff; border:1px solid rgba(255,17,17,.3); border-radius:8px; padding:8px 10px; font-family:inherit;"></select>
+    </div>
+    <div id="adminQuestionList"></div>
+    <div class="section-title">Ajouter une question</div>
+    <div class="glass" style="padding:16px;">
+      <textarea id="aqPrompt" placeholder="Intitulé de la question" style="width:100%; min-height:60px; background:var(--asphalte-2); color:#fff; border:1px solid rgba(255,17,17,.3); border-radius:10px; padding:10px; font-family:inherit; margin-bottom:10px;"></textarea>
+      <input id="aqOpt0" placeholder="Réponse 1" style="width:100%; margin-bottom:8px; background:var(--asphalte-2); color:#fff; border:1px solid #000; border-radius:8px; padding:9px;">
+      <input id="aqOpt1" placeholder="Réponse 2" style="width:100%; margin-bottom:8px; background:var(--asphalte-2); color:#fff; border:1px solid #000; border-radius:8px; padding:9px;">
+      <input id="aqOpt2" placeholder="Réponse 3" style="width:100%; margin-bottom:8px; background:var(--asphalte-2); color:#fff; border:1px solid #000; border-radius:8px; padding:9px;">
+      <input id="aqOpt3" placeholder="Réponse 4 (optionnel)" style="width:100%; margin-bottom:10px; background:var(--asphalte-2); color:#fff; border:1px solid #000; border-radius:8px; padding:9px;">
+      <div class="s-desc" style="margin-bottom:6px;">Bonne(s) réponse(s) :</div>
+      <div style="display:flex; gap:14px; margin-bottom:10px; flex-wrap:wrap;">
+        <label style="font-size:12px;"><input type="checkbox" id="aqCorrect0"> Réponse 1</label>
+        <label style="font-size:12px;"><input type="checkbox" id="aqCorrect1"> Réponse 2</label>
+        <label style="font-size:12px;"><input type="checkbox" id="aqCorrect2"> Réponse 3</label>
+        <label style="font-size:12px;"><input type="checkbox" id="aqCorrect3"> Réponse 4</label>
+      </div>
+      <textarea id="aqExplain" placeholder="Explication (affichée après la réponse)" style="width:100%; min-height:50px; background:var(--asphalte-2); color:#fff; border:1px solid #000; border-radius:10px; padding:10px; font-family:inherit; margin-bottom:12px;"></textarea>
+      <button class="btn" style="background:var(--rouge); color:#fff;" onclick="adminAddQuestion()">➕ Ajouter la question</button>
+    </div>
+  </div>
+
+  <!-- APPRENDRE (bibliothèque de cours) -->
+  <div class="screen" id="screen-learn">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Apprendre</h2><div class="sub">Cours et fiches par thème</div></div>
+    </div>
+    <div class="cat-list" id="learnList"></div>
+  </div>
+
+  <!-- FICHE DE COURS -->
+  <div class="screen" id="screen-course">
+    <div class="row-header">
+      <button class="back-btn" onclick="showLearn()">←</button>
+      <div><h2 id="courseTitle">Cours</h2><div class="sub" id="courseSub"></div></div>
+    </div>
+    <div class="glass" style="padding:18px; margin-bottom:16px;">
+      <div id="courseBody" style="font-size:14px; line-height:1.7; color:var(--blanc-route);"></div>
+      <button class="btn" id="courseListenBtn" style="background:var(--signal); color:var(--asphalte); margin-top:14px;" onclick="listenCourse()">🔊 Écouter le cours</button>
+    </div>
+    <button class="btn btn-primary" onclick="startCourseQuiz()">🎮 S'entraîner sur ce thème</button>
+  </div>
+
+  <!-- COACH INTELLIGENT -->
+  <div class="screen" id="screen-coach">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Coach intelligent</h2><div class="sub">Analyse de votre niveau</div></div>
+    </div>
+    <div id="coachAnalysis"></div>
+    <div id="coachReco"></div>
+  </div>
+
+  <!-- CLASSEMENT -->
+  <div class="screen" id="screen-leaderboard">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Classement</h2><div class="sub">Votre position</div></div>
+    </div>
+    <div class="glass" style="padding:14px 16px; margin-bottom:16px; font-size:12.5px; color:var(--gris); line-height:1.6;">
+      🚧 Le classement en ligne multi-joueurs n'est pas encore connecté (aucun serveur n'est branché à ce prototype). En attendant, voici votre aperçu local — l'architecture est prête à recevoir un vrai classement en ligne.
+    </div>
+    <div class="stat-grid" id="leaderboardGrid"></div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="screen" id="screen-categories">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Entraînement</h2><div class="sub">Choisis un thème du code de la route</div></div>
+    </div>
+    <div class="cat-list" id="catList"></div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="screen" id="screen-quiz">
+    <div class="row-header">
+      <button class="back-btn" onclick="confirmQuit()">←</button>
+      <div><h2 id="quizTitle">Quiz</h2><div class="sub" id="quizSub"></div></div>
+    </div>
+    <div class="quiz-topline">
+      <div class="pill streak">🔥 <span id="streakVal">0</span></div>
+      <div class="pill" id="qCounterPill">1 / 10</div>
+      <div class="pill timer" id="timerPill" style="display:none">⏱ 20:00</div>
+    </div>
+    <div class="q-progress"><div class="q-progress-fill" id="qProgressFill" style="width:0%"></div></div>
+
+    <div class="q-visual-wrap" id="qVisualWrap"></div>
+    <div class="q-prompt" id="qPrompt"></div>
+    <div class="q-hint" id="qHint"></div>
+
+    <div class="feedback-banner" id="feedbackBanner"></div>
+    <div class="options" id="qOptions"></div>
+    <button class="btn btn-primary" id="qActionBtn" disabled>Valider</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="screen-results">
+    <div class="result-hero">
+      <div class="score-circle" id="scoreCircle"><div class="num" id="scoreNum">0%<small>Réussite</small></div></div>
+      <h2 id="resultTitle">Résultat</h2>
+      <p id="resultSub"></p>
+    </div>
+    <div class="result-stats">
+      <div class="rstat"><div class="v" id="rGood">0</div><div class="l">Bonnes</div></div>
+      <div class="rstat"><div class="v" id="rBad">0</div><div class="l">Erreurs</div></div>
+      <div class="rstat"><div class="v" id="rXp">+0</div><div class="l">XP gagné</div></div>
+    </div>
+    <div id="examExtra"></div>
+    <div id="newBadges"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goHome()">Accueil</button>
+      <button class="btn btn-primary" id="retryBtn">Rejouer</button>
+    </div>
+    <div class="correction-list" id="correctionList"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="screen" id="screen-stats">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Statistiques</h2><div class="sub">Ta session d'entraînement</div></div>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="section-title">Chapitres à travailler</div>
+    <div id="weakList"></div>
+    <div class="section-title">Historique</div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="screen" id="screen-profile">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Mon niveau</h2><div class="sub">Grade et badges</div></div>
+    </div>
+    <div class="rank-hero">
+      <div class="badge-shape" id="profileRankIcon">🚗</div>
+      <h2 id="profileRankName">Débutant</h2>
+    </div>
+    <div class="level-card">
+      <div class="lc-top">
+        <div class="lc-level" id="lcLevel">Niveau 1</div>
+        <div class="lc-rank" id="lcRank">Débutant</div>
+      </div>
+      <div class="lc-bar"><div class="lc-fill" id="lcFill" style="width:0%"></div></div>
+      <div class="lc-bottom">
+        <span class="mono" id="lcXpFrac">0 / 150 XP</span>
+        <span>Série : <span class="lc-streak" id="lcStreak">🔥 0</span></span>
+      </div>
+    </div>
+    <div class="stat-grid" id="profileStatGrid" style="margin-bottom:22px;"></div>
+    <div class="section-title">Badges</div>
+    <div class="badges-grid" id="badgesGrid"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="screen-settings">
+    <div class="row-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div><h2>Réglages</h2><div class="sub">Audio et accessibilité</div></div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-row">
+        <div class="s-info"><span class="s-em">🔊</span><div><div class="s-name">Voix</div><div class="s-desc">Guidage vocal des questions et réponses</div></div></div>
+        <div class="switch" id="sw-voice" onclick="toggleSetting('voice')"></div>
+      </div>
+      <div class="settings-row">
+        <div class="s-info"><span class="s-em">🎯</span><div><div class="s-name">Effets sonores</div><div class="s-desc">Sons de réponse, clics, récompenses</div></div></div>
+        <div class="switch" id="sw-sfx" onclick="toggleSetting('sfx')"></div>
+      </div>
+      <div class="settings-row">
+        <div class="s-info"><span class="s-em">🎵</span><div><div class="s-name">Musique</div><div class="s-desc">Fond sonore léger pendant le jeu</div></div></div>
+        <div class="switch" id="sw-music" onclick="toggleSetting('music')"></div>
+      </div>
+      <div class="settings-row">
+        <div class="s-info"><span class="s-em">⏱️</span><div><div class="s-name">Sons du chronomètre</div><div class="s-desc">Alerte au démarrage et à la fin du temps</div></div></div>
+        <div class="switch" id="sw-timerSound" onclick="toggleSetting('timerSound')"></div>
+      </div>
+      <div class="vol-row">
+        <div class="settings-row" style="border:none; padding-bottom:8px;">
+          <div class="s-info"><span class="s-em">🔉</span><div><div class="s-name">Volume</div></div></div>
+          <span class="mono" id="volLabel" style="color:var(--gris); font-size:12px;">80%</span>
+        </div>
+        <input type="range" min="0" max="100" value="80" id="volumeRange" oninput="setVolume(this.value)">
+      </div>
+    </div>
+    <div class="settings-note">Les sons de ce prototype sont générés en direct (synthèse vocale du navigateur + sons synthétiques). L'architecture (voir <span class="mono">VOICE_LINES</span> et <span class="mono">SFX</span> dans le code) permet de brancher plus tard de vrais fichiers audio professionnels sans changer la logique du jeu.</div>
+    <div class="settings-note">📥 <b style="color:var(--signal);">Mode hors ligne</b> — une fois cette page chargée, toutes les questions, cours et modes de jeu fonctionnent déjà sans connexion internet (tout est en mémoire locale). Seuls le classement en ligne, la synchronisation entre appareils et les mises à jour de contenu nécessiteront une connexion : l'architecture est prête à les recevoir.</div>
+  </div>
+
+  <!-- SIMULATION -->
+  <div class="screen" id="screen-simulation">
+    <div class="row-header">
+      <button class="back-btn" onclick="confirmQuitSimulation()">←</button>
+      <div><h2>Mode Simulation</h2><div class="sub" id="simSub">Situation 1 / 8</div></div>
+    </div>
+    <div class="sim-lives" id="simLives"></div>
+    <div class="sim-timer-bar"><div class="sim-timer-fill" id="simTimerFill" style="width:100%"></div></div>
+    <div class="sim-scene" id="simScene"></div>
+    <div class="feedback-banner" id="simFeedback"></div>
+    <div class="sim-options" id="simOptions"></div>
+  </div>
+
+  <div class="bottomnav">
+    <button class="nav-btn active" data-nav="home" onclick="goHome()"><span class="em">🏠</span>Accueil</button>
+    <button class="nav-btn" data-nav="learn" onclick="showLearn()"><span class="em">📚</span>Apprendre</button>
+    <button class="nav-btn" data-nav="cat" onclick="showCategories('training')"><span class="em">🎮</span>Entraîner</button>
+    <button class="nav-btn" data-nav="sim" onclick="startSimulation()"><span class="em">🚗</span>Simuler</button>
+    <button class="nav-btn" data-nav="exam" onclick="startExam()"><span class="em">🏆</span>Réussir</button>
+    <button class="nav-btn" data-nav="profile" onclick="showProfile()"><span class="em">👤</span>Profil</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   PERMIS CHALLENGE BÉNIN — moteur de jeu (v1)
+   Toutes les données sont en mémoire (session en cours).
+   Structure pensée pour brancher plus tard un backend
+   (auth, base de données, classement en ligne, appli mobile).
+   ========================================================= */
+
+/* ---------- 0. MOTEUR AUDIO (voix + effets sonores) ----------
+   Abstraction volontaire : chaque ligne vocale / son a un champ `file`
+   laissé à `null`. Pour brancher de vrais fichiers audio professionnels
+   plus tard, il suffit de renseigner ce champ (ex: "audio/voix/bonne-reponse.mp3")
+   — playSfx() et speak() essaieront le fichier avant de retomber sur la
+   version synthétique du navigateur. */
+const VOICE_LINES = {
+  correct:      { text:"Bonne réponse !",            file:null },
+  wrong:        { text:"Mauvaise réponse.",          file:null },
+  levelUp:      (rank)=>({ text:`Félicitations, nouveau rang : ${rank} !`, file:null }),
+  badge:        (name)=>({ text:`Badge débloqué : ${name}.`, file:null }),
+  examPass:     { text:"Examen réussi, bravo !",      file:null },
+  examFail:     { text:"Examen non validé, continue à t'entraîner.", file:null },
+  dailyDone:    { text:"Défi du jour terminé.",       file:null },
+  simCorrect:   { text:"Bonne décision.",             file:null },
+  simWrong:     { text:"Mauvaise décision.",          file:null },
+  simTimeout:   { text:"Trop lent !",                 file:null },
+  welcomeTraining: { text:"Bienvenue dans votre entraînement. Observez attentivement chaque question.", file:null },
+  welcomeExam:  { text:"Bienvenue dans l'examen blanc. Aucune indication ne sera donnée avant la fin.", file:null },
+  welcomeDaily: { text:"Voici votre défi du jour. Bonne chance !", file:null },
+  welcomeSim:   { text:"Bienvenue au volant. Restez attentif à chaque situation.", file:null },
+};
+const SFX = {
+  click:      { file:null, notes:[[660,0.05,"sine"]] },
+  correct:    { file:null, notes:[[523,0.09,"triangle"],[784,0.14,"triangle"]] },
+  wrong:      { file:null, notes:[[220,0.16,"sawtooth"],[164,0.2,"sawtooth"]] },
+  xp:         { file:null, notes:[[880,0.05,"sine"],[1180,0.08,"sine"]] },
+  levelup:    { file:null, notes:[[523,0.1,"triangle"],[659,0.1,"triangle"],[784,0.16,"triangle"]] },
+  badge:      { file:null, notes:[[784,0.08,"sine"],[988,0.08,"sine"],[1318,0.18,"sine"]] },
+  timerstart: { file:null, notes:[[440,0.07,"square"]] },
+  timerend:   { file:null, notes:[[300,0.12,"square"],[220,0.22,"square"]] },
+  exampass:   { file:null, notes:[[523,0.1,"triangle"],[659,0.1,"triangle"],[784,0.1,"triangle"],[1046,0.22,"triangle"]] },
+  examfail:   { file:null, notes:[[392,0.14,"sawtooth"],[311,0.14,"sawtooth"],[262,0.26,"sawtooth"]] },
+};
+
+let audioCtx = null;
+function ensureAudioCtx(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+  }
+  if(audioCtx && audioCtx.state==="suspended") audioCtx.resume();
+  return audioCtx;
+}
+function playTone(freq, duration, type, delay){
+  const ctx = ensureAudioCtx(); if(!ctx) return;
+  const t0 = ctx.currentTime + (delay||0);
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.type = type||"sine"; osc.frequency.setValueAtTime(freq, t0);
+  const vol = 0.14 * (state.settings.volume);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0+0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0+duration);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0+duration+0.02);
+}
+function playSfx(name){
+  if(!state.settings.sfx) return;
+  const def = SFX[name]; if(!def) return;
+  if(def.file){ /* réservé à un futur fichier audio réel */ return; }
+  let t = 0;
+  def.notes.forEach(([freq,dur,type])=>{ playTone(freq,dur,type,t); t += dur*0.8; });
+}
+let currentUtterance = null;
+function speak(text){
+  if(!state.settings.voice || !text) return;
+  if(!("speechSynthesis" in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "fr-FR"; u.rate = 1; u.pitch = 1; u.volume = state.settings.volume;
+    currentUtterance = u;
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* synthèse vocale indisponible */ }
+}
+function speakLine(entry){
+  if(!entry) return;
+  if(entry.file){ return; }
+  speak(entry.text);
+}
+
+let musicOsc = null, musicGain = null;
+function toggleMusic(on){
+  const ctx = ensureAudioCtx(); if(!ctx) return;
+  if(on && !musicOsc){
+    musicOsc = ctx.createOscillator(); musicGain = ctx.createGain();
+    musicOsc.type = "sine"; musicOsc.frequency.value = 110;
+    musicGain.gain.value = 0.02 * state.settings.volume;
+    const lfo = ctx.createOscillator(); const lfoGain = ctx.createGain();
+    lfo.frequency.value = 0.08; lfoGain.gain.value = 20;
+    lfo.connect(lfoGain); lfoGain.connect(musicOsc.frequency);
+    musicOsc.connect(musicGain); musicGain.connect(ctx.destination);
+    musicOsc.start(); lfo.start();
+  } else if(!on && musicOsc){
+    try{ musicOsc.stop(); }catch(e){}
+    musicOsc = null; musicGain = null;
+  }
+}
+
+/* ---------- 1. CATEGORIES ---------- */
+const CATEGORIES = {
+  panneaux:    { label:"Panneaux",     icon:"🔺", accent:"var(--rouge)" },
+  voyants:     { label:"Voyants",      icon:"🛢️", accent:"var(--signal)" },
+  circulation: { label:"Circulation",  icon:"🚦", accent:"var(--vert)" },
+  mecanique:   { label:"Mécanique",    icon:"🔧", accent:"var(--bleu)" },
+  documents:   { label:"Documents & Bénin", icon:"🇧🇯", accent:"var(--gris)" },
+};
+
+/* ---------- 1bis. BIBLIOTHÈQUE DE COURS (section Apprendre) ---------- */
+const COURSES = {
+  panneaux: { title:"Signalisation routière", text:
+    "La signalisation se répartit en grandes familles : les panneaux de danger (triangle, fond blanc, bordure rouge) préviennent d'un risque à venir ; les panneaux d'interdiction (cercle, bordure rouge) interdisent une manœuvre ; les panneaux d'obligation (cercle bleu) imposent une action ; les panneaux d'indication (rectangle ou carré bleu) informent sur la route. Le panneau STOP, octogonal rouge, impose toujours un arrêt complet, même si la voie semble libre. Apprends à reconnaître la forme et la couleur avant même de lire le symbole : c'est souvent plus rapide et ça évite les erreurs de lecture au dernier moment." },
+  voyants: { title:"Voyants du tableau de bord", text:
+    "Chaque voyant a une couleur qui indique son urgence. Un voyant rouge signale un danger immédiat (frein, température, pression d'huile) : il faut s'arrêter dès que possible en sécurité. Un voyant orange/jaune signale une anomalie à surveiller ou à faire contrôler rapidement (moteur, ABS, pression des pneus) sans obliger un arrêt immédiat. Un voyant vert ou bleu est simplement informatif (clignotant, feux de route actifs). Avant de démarrer, une majorité de voyants s'allument brièvement pour un auto-test : c'est normal, ils doivent s'éteindre une fois le moteur lancé." },
+  circulation: { title:"Règles de circulation et priorités", text:
+    "En l'absence de signalisation, la priorité à droite s'applique à la plupart des intersections. Dans un rond-point, les véhicules déjà engagés dans l'anneau sont prioritaires sur ceux qui souhaitent y entrer. Un feu orange fixe impose l'arrêt, sauf si le freinage en sécurité est impossible. La distance de sécurité avec le véhicule qui précède doit permettre de s'arrêter à temps : la règle des deux secondes est une bonne base, à augmenter par temps de pluie. Un piéton engagé sur un passage doit toujours pouvoir terminer sa traversée en sécurité." },
+  mecanique: { title:"Mécanique et entretien du véhicule", text:
+    "Quelques vérifications simples évitent la majorité des pannes : le niveau d'huile moteur se contrôle à froid, véhicule à l'arrêt sur sol plat, à l'aide de la jauge. Le liquide de refroidissement évite la surchauffe du moteur. Les pneus doivent être remplacés lorsque leurs sculptures approchent du témoin d'usure légal, généralement 1,6 mm. L'ABS empêche le blocage des roues lors d'un freinage d'urgence, ce qui permet de garder le contrôle de la direction. Un entretien régulier de la batterie (bornes propres, niveau de charge) limite les pannes de démarrage." },
+  documents: { title:"Documents du véhicule et code de la route au Bénin", text:
+    "Au Bénin comme ailleurs, plusieurs documents et obligations encadrent la conduite. Le permis de conduire catégorie B autorise les véhicules légers. La carte grise (certificat d'immatriculation) identifie le véhicule et son propriétaire. L'assurance responsabilité civile est obligatoire : elle couvre les dommages causés à autrui. La visite technique vérifie l'état général et la sécurité du véhicule. La TVM (Taxe sur les Véhicules à Moteur) est une taxe annuelle due par les propriétaires de véhicules à moteur. Un triangle de présignalisation et un gilet réfléchissant font partie des équipements de sécurité recommandés à bord." },
+};
+
+/* ---------- 2. BANQUE DE QUESTIONS ----------
+   Ajoute librement de nouvelles entrées à ces tableaux :
+   chaque question suit toujours la même forme. */
+const QUESTIONS = {
+
+  panneaux: [
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"triangle", symbol:"⚠"},
+      options:["Danger général, restez vigilant","Fin de toutes les interdictions","Route prioritaire","Stationnement autorisé"], correct:[0],
+      explain:"Le triangle à bordure rouge annonce un danger général sur la route." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"triangle", symbol:"🚶"},
+      options:["Zone commerçante","Traversée de piétons à proximité","Interdiction aux piétons","Passage à niveau"], correct:[1],
+      explain:"Ce triangle signale la présence probable de piétons traversant la chaussée." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"circleRed", symbol:"50"},
+      options:["Vitesse minimale 50 km/h","Vitesse maximale autorisée 50 km/h","Distance de 50 m avant le prochain village","Numéro de route 50"], correct:[1],
+      explain:"Le cercle à bordure rouge avec un nombre indique la vitesse maximale autorisée." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"circleRed", symbol:"🚫↷"},
+      options:["Dépassement interdit","Virage obligatoire à droite","Fin d'interdiction de dépasser","Sens unique"], correct:[0],
+      explain:"Ce panneau interdit le dépassement de tout véhicule à moteur, sauf deux-roues." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"circleRed", symbol:"🚗🚫"},
+      options:["Parking réservé aux voitures","Circulation interdite à tous les véhicules à moteur","Priorité aux voitures","Zone de lavage auto"], correct:[1],
+      explain:"Le cercle rouge avec silhouette de voiture barrée interdit l'accès à tous les véhicules à moteur." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"circleBlue", symbol:"↑"},
+      options:["Sens interdit","Obligation d'aller tout droit","Impasse","Route en travaux"], correct:[1],
+      explain:"Le disque bleu avec flèche impose la direction à suivre : ici, tout droit." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"circleBlue", symbol:"↻"},
+      options:["Demi-tour obligatoire","Sens giratoire, cédez le passage aux véhicules déjà engagés","Rond-point interdit","Zone piétonne"], correct:[1],
+      explain:"Ce panneau annonce un carrefour à sens giratoire : priorité aux véhicules déjà dans l'anneau." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"octagon", symbol:"STOP"},
+      options:["Ralentir puis passer si la voie est libre","Arrêt obligatoire, même si aucune voiture n'arrive","Fin de limitation de vitesse","Cédez le passage seulement si nécessaire"], correct:[1],
+      explain:"Le STOP impose un arrêt complet et obligatoire, quelle que soit la circulation." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"triangleInv", symbol:"▽"},
+      options:["Cédez le passage","Route prioritaire sur 2 km","Voie sans issue","Interdiction de s'arrêter"], correct:[0],
+      explain:"Le triangle pointe en bas indique que vous devez céder le passage aux autres usagers." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"rectBlue", symbol:"P"},
+      options:["Priorité à droite","Stationnement autorisé","Poste de police","Pharmacie"], correct:[1],
+      explain:"Le rectangle bleu avec la lettre P indique une zone de stationnement autorisée." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"circleRed", symbol:"P🚫"},
+      options:["Stationnement interdit","Parking gratuit","Stationnement réservé aux taxis","Priorité au stationnement"], correct:[0],
+      explain:"Le cercle rouge avec P barré interdit le stationnement à cet endroit." },
+    { prompt:"Que signifie ce panneau ?", visual:{shape:"triangle", symbol:"🚂"},
+      options:["Aéroport à proximité","Passage à niveau sans barrière","Gare routière","Zone industrielle"], correct:[1],
+      explain:"Ce triangle annonce un passage à niveau ; ralentissez et soyez prêt à vous arrêter." },
+  ],
+
+  voyants: [
+    { prompt:"Ce voyant s'allume en rouge au tableau de bord. Que devez-vous faire ?", visual:{icon:"🛢️", glow:"rgba(214,41,62,.6)"},
+      options:["Continuer normalement","Arrêter le moteur immédiatement, pression d'huile insuffisante","Faire le plein de carburant","Vérifier la pression des pneus"], correct:[1],
+      explain:"Ce voyant signale une pression d'huile insuffisante : arrêtez le moteur sans attendre pour éviter la casse." },
+    { prompt:"Ce voyant rouge apparaît en roulant. Que signifie-t-il ?", visual:{icon:"🌡️", glow:"rgba(214,41,62,.6)"},
+      options:["Température moteur trop élevée","Chauffage en marche","Niveau de carburant bas","Frein à main serré"], correct:[0],
+      explain:"Il indique une surchauffe du moteur : arrêtez-vous dès que possible et laissez refroidir." },
+    { prompt:"Que signale ce voyant ?", visual:{icon:"🔋", glow:"rgba(214,41,62,.6)"},
+      options:["Batterie chargée à 100 %","Anomalie du circuit de charge de la batterie","Phares allumés","Airbag désactivé"], correct:[1],
+      explain:"Ce voyant révèle un problème dans le circuit de charge (alternateur ou batterie)." },
+    { prompt:"Ce voyant rouge en forme de cercle avec un point d'exclamation s'allume. Que signifie-t-il ?", visual:{icon:"🛑", glow:"rgba(214,41,62,.6)"},
+      options:["Frein à main serré ou niveau de liquide de frein bas","Feu de brouillard actif","ABS désactivé","Ceinture détachée"], correct:[0],
+      explain:"Il peut indiquer un frein à main mal desserré ou un niveau de liquide de frein insuffisant." },
+    { prompt:"Ce voyant orange en forme de moteur s'allume. Que devez-vous faire ?", visual:{icon:"⚙️", glow:"rgba(244,196,48,.6)"},
+      options:["Ignorer, ce n'est pas important","Faire vérifier le moteur rapidement par un professionnel","Changer les pneus","Vérifier la ceinture de sécurité"], correct:[1],
+      explain:"Le voyant moteur signale une anomalie électronique ou mécanique à faire diagnostiquer." },
+    { prompt:"Les lettres « ABS » s'allument en orange. Que signifie ce voyant ?", visual:{icon:"🅰️", glow:"rgba(244,196,48,.6)"},
+      options:["Système antiblocage des roues défaillant","Airbag activé","Climatisation en panne","Assistance de direction renforcée"], correct:[0],
+      explain:"L'ABS empêche le blocage des roues au freinage ; ce voyant signale un défaut du système." },
+    { prompt:"Ce voyant orange représente une personne avec un coussin gonflé. Que signifie-t-il ?", visual:{icon:"🎈", glow:"rgba(244,196,48,.6)"},
+      options:["Airbag prêt à se déclencher normalement","Anomalie du système airbag","Ceinture bien attachée","Climatisation active"], correct:[1],
+      explain:"Allumé en continu, ce voyant indique un défaut du système airbag à faire réparer." },
+    { prompt:"Ce voyant orange en forme de pompe s'allume. Que signifie-t-il ?", visual:{icon:"⛽", glow:"rgba(244,196,48,.6)"},
+      options:["Niveau de carburant bas","Fuite de liquide de frein","Filtre à air encrassé","Vidange à faire"], correct:[0],
+      explain:"Il vous avertit qu'il reste peu de carburant : prévoyez de faire le plein rapidement." },
+    { prompt:"Ce voyant orange (pneu en coupe avec un point d'exclamation) s'allume. Que signifie-t-il ?", visual:{icon:"🛞", glow:"rgba(244,196,48,.6)"},
+      options:["Pression d'un ou plusieurs pneus trop basse","Roue de secours manquante","Pneus neufs installés","Système de freinage optimal"], correct:[0],
+      explain:"Ce voyant signale une pression de gonflage insuffisante sur au moins un pneu." },
+    { prompt:"Ce voyant rouge (silhouette avec ceinture) reste allumé. Que signifie-t-il ?", visual:{icon:"🔒", glow:"rgba(214,41,62,.6)"},
+      options:["Ceinture de sécurité non attachée","Portière mal fermée","Airbag désactivé","Frein à main serré"], correct:[0],
+      explain:"Il rappelle qu'un occupant n'a pas attaché sa ceinture de sécurité." },
+  ],
+
+  circulation: [
+    { prompt:"À une intersection sans panneau ni feu, qui est prioritaire ?", visual:{emoji:"🚗🚗"},
+      options:["Le véhicule le plus rapide","Le véhicule venant de la droite","Le véhicule le plus gros","Le premier arrivé"], correct:[1],
+      explain:"En l'absence de signalisation, la priorité à droite s'applique." },
+    { prompt:"Un véhicule signale son intention de vous dépasser. Que devez-vous faire ?", visual:{emoji:"🚙💨🚗"},
+      options:["Accélérer pour l'empêcher","Serrer à droite et maintenir votre allure sans accélérer","Freiner brusquement","Klaxonner et zigzaguer"], correct:[1],
+      explain:"Facilitez le dépassement en restant à droite sans accélérer, pour la sécurité de tous." },
+    { prompt:"Quelle distance de sécurité minimale recommande-t-on avec le véhicule qui précède ?", visual:{emoji:"🚗↔️🚙"},
+      options:["La règle des 2 secondes","1 mètre fixe","La longueur d'une voiture","Aucune règle particulière"], correct:[0],
+      explain:"La règle des 2 secondes permet d'adapter la distance à la vitesse réelle." },
+    { prompt:"Le feu passe à l'orange fixe alors que vous approchez du carrefour. Que faites-vous ?", visual:{emoji:"🟠🚦"},
+      options:["Accélérer pour passer avant le rouge","S'arrêter si cela peut se faire en toute sécurité","Klaxonner et continuer","Faire demi-tour"], correct:[1],
+      explain:"L'orange impose l'arrêt, sauf si le freinage en sécurité est impossible." },
+    { prompt:"Un piéton s'engage sur un passage non protégé devant vous. Que devez-vous faire ?", visual:{emoji:"🚶🚗"},
+      options:["Accélérer pour passer avant lui","Ralentir et le laisser traverser en sécurité","L'ignorer, il n'a pas la priorité","Klaxonner pour qu'il recule"], correct:[1],
+      explain:"Le piéton engagé sur la chaussée doit toujours pouvoir terminer sa traversée en sécurité." },
+    { prompt:"De nuit, un véhicule arrive en face en feux de route. Que devez-vous faire ?", visual:{emoji:"🌙🚗💡"},
+      options:["Garder vos feux de route","Passer en feux de croisement","Éteindre tous les feux","Faire des appels de phares en continu"], correct:[1],
+      explain:"Passez en feux de croisement pour ne pas éblouir le conducteur qui arrive en face." },
+    { prompt:"Vous conduisez sous une forte pluie. Quelle adaptation est recommandée ?", visual:{emoji:"🌧️🚗"},
+      options:["Rouler plus vite pour sortir de la pluie","Réduire la vitesse et augmenter la distance de sécurité","Garder la même vitesse qu'en temps sec","Rouler avec les warnings allumés"], correct:[1],
+      explain:"La pluie réduit l'adhérence : ralentissez et augmentez les distances de sécurité." },
+    { prompt:"Dans un rond-point sans feu, qui est prioritaire ?", visual:{emoji:"🔄🚗"},
+      options:["Les véhicules qui entrent dans le rond-point","Les véhicules déjà engagés dans le rond-point","Le véhicule le plus proche de la sortie","Aucune règle, chacun se débrouille"], correct:[1],
+      explain:"Les véhicules déjà engagés dans l'anneau du rond-point sont prioritaires." },
+    { prompt:"Vous voulez vous garer en marche arrière entre deux véhicules en ville. Que devez-vous faire d'abord ?", visual:{emoji:"🅿️🚗"},
+      options:["Vérifier qu'aucun piéton ou véhicule n'arrive, puis manœuvrer lentement","Foncer directement en marche arrière","Klaxonner et se garer sans regarder","Se garer uniquement en avant"], correct:[0],
+      explain:"Vérifiez les abords (piétons, véhicules, cyclistes) avant toute manœuvre en marche arrière." },
+    { prompt:"En agglomération, sauf indication contraire, quelle est la vitesse maximale généralement appliquée ?", visual:{emoji:"🏙️🚗"},
+      options:["30 km/h","50 km/h","70 km/h","90 km/h"], correct:[1],
+      explain:"En agglomération, la vitesse est en général limitée à 50 km/h sauf signalisation différente — vérifiez toujours les panneaux locaux." },
+  ],
+
+  mecanique: [
+    { prompt:"Quel est le rôle principal de l'embrayage ?", visual:{emoji:"⚙️🦶"},
+      options:["Freiner le véhicule","Transmettre ou couper la puissance du moteur vers la boîte de vitesses","Refroidir le moteur","Diriger les roues"], correct:[1],
+      explain:"L'embrayage permet de désolidariser temporairement le moteur de la boîte de vitesses, notamment pour changer de rapport." },
+    { prompt:"Comment vérifie-t-on correctement le niveau d'huile moteur ?", visual:{emoji:"🛢️📏"},
+      options:["Moteur chaud et véhicule en pente","Moteur arrêté, à froid, véhicule sur terrain plat, avec la jauge","En roulant, à l'aide du rétroviseur","Ce n'est jamais nécessaire"], correct:[1],
+      explain:"On contrôle l'huile moteur à froid, véhicule à l'arrêt sur sol plat, à l'aide de la jauge." },
+    { prompt:"À quoi sert le liquide de refroidissement ?", visual:{emoji:"❄️🔧"},
+      options:["Lubrifier les pneus","Éviter la surchauffe du moteur","Nettoyer le pare-brise","Alimenter la batterie"], correct:[1],
+      explain:"Il circule dans le moteur pour évacuer la chaleur et éviter la surchauffe." },
+    { prompt:"Quel signe indique qu'un pneu doit être remplacé ?", visual:{emoji:"🛞🔍"},
+      options:["Sculptures inférieures au témoin d'usure légal","Pneu propre et brillant","Pression toujours parfaite","Pneu récemment gonflé"], correct:[0],
+      explain:"Quand la profondeur des sculptures atteint le témoin d'usure (souvent 1,6 mm), le pneu doit être changé." },
+    { prompt:"Quel est le rôle du système ABS ?", visual:{emoji:"🛑⚙️"},
+      options:["Augmenter la vitesse maximale","Empêcher le blocage des roues lors d'un freinage d'urgence","Réduire la consommation de carburant","Éclairer la route la nuit"], correct:[1],
+      explain:"L'ABS évite le blocage des roues au freinage, permettant de garder le contrôle de la direction." },
+    { prompt:"Quel entretien régulier concerne la batterie ?", visual:{emoji:"🔋🧰"},
+      options:["Vérifier l'état des bornes et le niveau de charge","La remplir d'huile moteur","La faire chauffer avant chaque trajet","Aucun entretien n'est nécessaire"], correct:[0],
+      explain:"Il faut surveiller la propreté des bornes et le niveau de charge pour éviter les pannes." },
+    { prompt:"Quelle est la différence principale entre boîte manuelle et boîte automatique ?", visual:{emoji:"🕹️🔀"},
+      options:["Le conducteur change lui-même les rapports en manuel, la boîte le fait seule en automatique","Il n'existe aucune différence","La boîte automatique n'a pas de rapports","La boîte manuelle roule plus vite"], correct:[0],
+      explain:"En manuelle, le conducteur actionne l'embrayage et le levier ; en automatique, le système gère les rapports seul." },
+    { prompt:"À quoi sert la direction assistée ?", visual:{emoji:"🚗🔧"},
+      options:["Réduire l'effort nécessaire pour tourner le volant","Freiner plus vite","Refroidir le moteur","Éclairer davantage la route"], correct:[0],
+      explain:"Elle assiste le conducteur pour réduire l'effort physique requis pour braquer le volant." },
+  ],
+
+  documents: [
+    { prompt:"À quoi correspond le permis de conduire catégorie B ?", visual:{emoji:"🪪"},
+      options:["Motos uniquement","Véhicules légers (voitures particulières)","Poids lourds uniquement","Transport en commun uniquement"], correct:[1],
+      explain:"Le permis B autorise la conduite des véhicules légers, comme les voitures particulières." },
+    { prompt:"À quoi sert la carte grise (certificat d'immatriculation) ?", visual:{emoji:"📇"},
+      options:["Elle identifie le véhicule et son propriétaire","Elle sert uniquement pour l'assurance","Elle remplace le permis de conduire","Elle n'a aucune utilité légale"], correct:[0],
+      explain:"Elle atteste officiellement de l'identité du véhicule et de son propriétaire." },
+    { prompt:"Que couvre au minimum l'assurance automobile obligatoire ?", visual:{emoji:"🛡️"},
+      options:["Uniquement le vol du véhicule","La responsabilité civile envers les tiers","Uniquement les dommages au conducteur","Rien, elle est facultative"], correct:[1],
+      explain:"L'assurance responsabilité civile, obligatoire, couvre les dommages causés à autrui." },
+    { prompt:"Quel est l'objectif de la visite technique (contrôle technique) ?", visual:{emoji:"🔍🚗"},
+      options:["Vérifier l'état général et la sécurité du véhicule","Changer les pneus gratuitement","Payer une amende","Renouveler automatiquement le permis"], correct:[0],
+      explain:"Elle vérifie que le véhicule respecte les normes de sécurité et de bon fonctionnement." },
+    { prompt:"Que représente la TVM (Taxe sur les Véhicules à Moteur) au Bénin ?", visual:{emoji:"💰"},
+      options:["Une taxe annuelle obligatoire liée au véhicule","Une amende pour excès de vitesse","Le prix du carburant","Une assurance optionnelle"], correct:[0],
+      explain:"La TVM est une taxe annuelle que les propriétaires de véhicules à moteur doivent régler." },
+    { prompt:"Parmi ces équipements, lequel est généralement obligatoire à bord du véhicule ?", visual:{emoji:"🧯🦺"},
+      options:["Un triangle de signalisation et un gilet de sécurité","Un parasol","Une glacière","Un tapis de sol supplémentaire"], correct:[0],
+      explain:"Le triangle de présignalisation et le gilet réfléchissant font partie des équipements de sécurité recommandés/obligatoires." },
+  ],
+};
+
+/* ---------- 3. PROGRESSION & BADGES ---------- */
+const RANKS = [
+  { min:0,    name:"Débutant",             icon:"🚗" },
+  { min:150,  name:"Apprenti conducteur",  icon:"🚙" },
+  { min:400,  name:"Conducteur",           icon:"🚕" },
+  { min:800,  name:"Conducteur confirmé",  icon:"🚓" },
+  { min:1400, name:"Expert",               icon:"🏎️" },
+  { min:2200, name:"As du volant",         icon:"🏆" },
+];
+
+const BADGES = {
+  premierPas:      { name:"Premier Pas",        em:"👣", desc:"Terminer un premier quiz" },
+  sansFaute:        { name:"Sans Faute",         em:"💯", desc:"100% de bonnes réponses sur un quiz" },
+  serie10:          { name:"Série de 10",        em:"🔥", desc:"10 bonnes réponses d'affilée" },
+  expertPanneaux:   { name:"Maître des Panneaux", em:"🔺", desc:"90% de réussite en Panneaux (10 rép. min)" },
+  expertVoyants:    { name:"Roi des Voyants",    em:"🛢️", desc:"90% de réussite en Voyants (10 rép. min)" },
+  mecanicien:       { name:"Mécanicien",         em:"🔧", desc:"90% de réussite en Mécanique (10 rép. min)" },
+  expertBenin:      { name:"Expert du Code Bénin", em:"🇧🇯", desc:"90% de réussite en Documents &amp; Bénin (10 rép. min)" },
+  examenReussi:     { name:"Examen Réussi",      em:"🎓", desc:"Réussir le mode Examen" },
+  marathonien:      { name:"Marathonien",        em:"🏃", desc:"5 quiz complétés dans la session" },
+  defiQuotidien:    { name:"Défi Quotidien",     em:"📅", desc:"Terminer le Défi du jour" },
+};
+
+/* ---------- 4. ÉTAT (en mémoire, session en cours) ---------- */
+let state = {
+  xp:0,
+  streak:0, bestStreak:0,
+  categoryProgress:{}, // {cat:{correct,total}}
+  badges:new Set(),
+  history:[], // {mode,label,date,correct,total,pct,xp}
+  quizzesCompleted:0,
+  dailyDoneDate:null,
+  masteredQuestions:new Set(), // prompts réussis au moins une fois
+  settings:{ voice:true, sfx:true, music:false, timerSound:true, volume:0.8 },
+};
+Object.keys(CATEGORIES).forEach(c => state.categoryProgress[c] = {correct:0,total:0});
+
+/* ---------- 5. MOTEUR DE QUIZ ---------- */
+let quiz = null; // session de quiz active
+let examTimerInterval = null;
+
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function buildQuestionPool(catFilter){
+  let pool = [];
+  const cats = catFilter ? [catFilter] : Object.keys(QUESTIONS);
+  cats.forEach(c => QUESTIONS[c].forEach(q => pool.push({...q, cat:c})));
+  return pool;
+}
+
+function dailySeedPick(n){
+  // sélection déterministe basée sur la date du jour (identique toute la journée)
+  const today = new Date(); const seed = today.getFullYear()*372 + today.getMonth()*31 + today.getDate();
+  let pool = buildQuestionPool(null);
+  // mélange pseudo-déterministe simple
+  pool = pool.map((q,i)=>({q, k:((i+1)*9301 + seed*49297)%233280})).sort((a,b)=>a.k-b.k).map(x=>x.q);
+  return pool.slice(0,n);
+}
+
+function startQuiz(mode, category){
+  let questions = [];
+  let title = "";
+  let timed = false, timeLimit = 0;
+
+  if(mode==="training"){
+    questions = shuffle(buildQuestionPool(category)).slice(0, Math.min(10, QUESTIONS[category].length));
+    title = CATEGORIES[category].label;
+  } else if(mode==="exam"){
+    let pool = shuffle(buildQuestionPool(null));
+    questions = [];
+    while(questions.length < 40){ questions = questions.concat(shuffle(pool)); }
+    questions = questions.slice(0,40);
+    title = "Examen blanc";
+    timed = true; timeLimit = 20*60;
+  } else if(mode==="daily"){
+    questions = dailySeedPick(10);
+    title = "Défi du jour";
+  }
+
+  quiz = {
+    mode, category, title, questions,
+    idx:0, correctCount:0, wrongCount:0,
+    answers:[], // {qIndex, selected:[], correct:bool}
+    selected:[],
+    answered:false,
+    timed, timeLeft:timeLimit, timeLimit,
+    streakStart:state.streak,
+    startedAt:Date.now(),
+  };
+
+  document.getElementById("timerPill").style.display = timed ? "flex" : "none";
+  playSfx("click");
+  switchScreen("screen-quiz");
+  const welcomeLine = mode==="training" ? VOICE_LINES.welcomeTraining : mode==="exam" ? VOICE_LINES.welcomeExam : mode==="daily" ? VOICE_LINES.welcomeDaily : null;
+  if(welcomeLine && state.settings.voice){
+    speakLine(welcomeLine);
+    setTimeout(renderQuizQuestion, 1900);
+  } else {
+    renderQuizQuestion();
+  }
+
+  if(timed){
+    if(state.settings.timerSound) playSfx("timerstart");
+    clearInterval(examTimerInterval);
+    examTimerInterval = setInterval(()=>{
+      quiz.timeLeft--;
+      updateTimerPill();
+      if(quiz.timeLeft===30 && state.settings.timerSound) playSfx("timerstart");
+      if(quiz.timeLeft<=0){ if(state.settings.timerSound) playSfx("timerend"); clearInterval(examTimerInterval); finishQuiz(); }
+    },1000);
+    updateTimerPill();
+  }
+}
+
+function updateTimerPill(){
+  const m = Math.floor(quiz.timeLeft/60), s = quiz.timeLeft%60;
+  document.getElementById("timerPill").innerHTML = `⏱ ${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+function renderVisual(q){
+  const v = q.visual;
+  if(!v) return "";
+  if(v.shape==="triangle") return `<div class="sign-triangle"><div class="inner">${v.symbol}</div></div>`;
+  if(v.shape==="triangleInv") return `<div class="sign-triangle-inv"><div class="inner">${v.symbol}</div></div>`;
+  if(v.shape==="circleRed") return `<div class="sign-circle-red">${v.symbol}</div>`;
+  if(v.shape==="circleBlue") return `<div class="sign-circle-blue">${v.symbol}</div>`;
+  if(v.shape==="rectBlue") return `<div class="sign-rect-blue">${v.symbol}</div>`;
+  if(v.shape==="octagon") return `<div class="sign-octagon">${v.symbol}</div>`;
+  if(v.icon) return `<div class="voyant-visual on" style="--glow:${v.glow||'rgba(244,196,48,.5)'}">${v.icon}</div>`;
+  if(v.emoji) return `<div class="scenario-visual">${v.emoji}</div>`;
+  return "";
+}
+
+function renderQuizQuestion(){
+  const q = quiz.questions[quiz.idx];
+  quiz.selected = [];
+  quiz.answered = false;
+
+  document.getElementById("quizTitle").textContent = quiz.title;
+  document.getElementById("quizSub").textContent = CATEGORIES[q.cat] ? CATEGORIES[q.cat].label : "";
+  document.getElementById("qCounterPill").textContent = `${quiz.idx+1} / ${quiz.questions.length}`;
+  document.getElementById("streakVal").textContent = state.streak;
+  document.getElementById("qProgressFill").style.width = `${(quiz.idx/quiz.questions.length)*100}%`;
+  document.getElementById("qVisualWrap").innerHTML = renderVisual(q);
+  document.getElementById("qPrompt").textContent = q.prompt;
+  document.getElementById("qHint").textContent = q.correct.length>1 ? "Plusieurs réponses possibles" : "Une seule réponse";
+
+  const banner = document.getElementById("feedbackBanner");
+  banner.className = "feedback-banner"; banner.innerHTML = "";
+
+  const optWrap = document.getElementById("qOptions");
+  optWrap.innerHTML = "";
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "option"; btn.type="button";
+    btn.innerHTML = `<span class="check">✓</span><span>${opt}</span>`;
+    btn.onclick = ()=> toggleOption(i);
+    optWrap.appendChild(btn);
+  });
+
+  const actionBtn = document.getElementById("qActionBtn");
+  actionBtn.textContent = "Valider";
+  actionBtn.disabled = true;
+  actionBtn.onclick = validateAnswer;
+
+  document.getElementById("qVisualWrap").classList.add("pop-in");
+  speak(q.prompt);
+}
+
+function toggleOption(i){
+  if(quiz.answered) return;
+  const q = quiz.questions[quiz.idx];
+  const multi = q.correct.length>1;
+  playSfx("click");
+  if(multi){
+    const pos = quiz.selected.indexOf(i);
+    if(pos>-1) quiz.selected.splice(pos,1); else quiz.selected.push(i);
+  } else {
+    quiz.selected = [i];
+    speak(q.options[i]);
+  }
+  document.querySelectorAll("#qOptions .option").forEach((el,idx)=>{
+    el.classList.toggle("selected", quiz.selected.includes(idx));
+  });
+  document.getElementById("qActionBtn").disabled = quiz.selected.length===0;
+}
+
+function arraysEqual(a,b){ const x=[...a].sort(); const y=[...b].sort(); return x.length===y.length && x.every((v,i)=>v===y[i]); }
+
+function validateAnswer(){
+  if(quiz.answered){ nextQuestion(); return; }
+  const q = quiz.questions[quiz.idx];
+  const isCorrect = arraysEqual(quiz.selected, q.correct);
+  quiz.answered = true;
+
+  document.querySelectorAll("#qOptions .option").forEach((el,idx)=>{
+    el.disabled = true;
+    if(q.correct.includes(idx)) el.classList.add("correct");
+    else if(quiz.selected.includes(idx)) el.classList.add("wrong");
+  });
+
+  const banner = document.getElementById("feedbackBanner");
+  banner.className = "feedback-banner show " + (isCorrect?"ok":"ko");
+  banner.innerHTML = `<b>${isCorrect?"Bonne réponse":"Réponse incorrecte"}</b>${q.explain}`;
+
+  const quizScreen = document.getElementById("screen-quiz");
+  if(isCorrect){
+    playSfx("correct"); speak(VOICE_LINES.correct.text);
+    quizScreen.classList.add("pulse-good"); setTimeout(()=>quizScreen.classList.remove("pulse-good"), 600);
+    state.masteredQuestions.add(q.prompt);
+  } else {
+    playSfx("wrong"); speak(VOICE_LINES.wrong.text);
+    quizScreen.classList.add("shake"); setTimeout(()=>quizScreen.classList.remove("shake"), 500);
+  }
+
+  if(isCorrect){
+    quiz.correctCount++;
+    state.streak++;
+    if(state.streak>state.bestStreak) state.bestStreak = state.streak;
+    gainXp(quiz.mode==="exam"?4:10);
+    if(state.streak===10 && !state.badges.has("serie10")){ state.badges.add("serie10"); quiz._newBadges=(quiz._newBadges||[]).concat("serie10"); }
+  } else {
+    quiz.wrongCount++;
+    state.streak = 0;
+  }
+  state.categoryProgress[q.cat].total++;
+  if(isCorrect) state.categoryProgress[q.cat].correct++;
+  quiz.answers.push({q, selected:[...quiz.selected], correct:isCorrect});
+
+  document.getElementById("streakVal").textContent = state.streak;
+  document.getElementById("qActionBtn").textContent = (quiz.idx===quiz.questions.length-1) ? "Voir le résultat" : "Question suivante";
+  document.getElementById("qActionBtn").disabled = false;
+  updateTopbar();
+}
+
+function nextQuestion(){
+  quiz.idx++;
+  if(quiz.idx >= quiz.questions.length){ clearInterval(examTimerInterval); finishQuiz(); return; }
+  renderQuizQuestion();
+}
+
+function confirmQuit(){
+  if(quiz && !quizFinishedFlag){
+    if(!confirm("Quitter ce quiz ? Ta progression sur cette série sera perdue.")) return;
+  }
+  clearInterval(examTimerInterval);
+  goHome();
+}
+
+let quizFinishedFlag = false;
+
+function finishQuiz(){
+  quizFinishedFlag = true;
+  const total = quiz.questions.length;
+  const pct = Math.round((quiz.correctCount/total)*100);
+  let bonusXp = 0;
+  const newBadges = quiz._newBadges || [];
+
+  if(!state.badges.has("premierPas")){ state.badges.add("premierPas"); newBadges.push("premierPas"); }
+  if(pct===100 && !state.badges.has("sansFaute")){ state.badges.add("sansFaute"); newBadges.push("sansFaute"); }
+
+  if(quiz.mode==="exam"){
+    if(pct>=70){
+      bonusXp += 100; if(!state.badges.has("examenReussi")){ state.badges.add("examenReussi"); newBadges.push("examenReussi"); }
+      playSfx("exampass"); speakLine(VOICE_LINES.examPass);
+    } else {
+      playSfx("examfail"); speakLine(VOICE_LINES.examFail);
+    }
+  }
+  if(quiz.mode==="daily"){
+    state.dailyDoneDate = todayKey();
+    if(pct===100) bonusXp += 30; else bonusXp += 15;
+    if(!state.badges.has("defiQuotidien")){ state.badges.add("defiQuotidien"); newBadges.push("defiQuotidien"); }
+    speakLine(VOICE_LINES.dailyDone);
+  }
+
+  ["panneaux","voyants","mecanique","documents"].forEach(c=>{
+    const p = state.categoryProgress[c];
+    const key = {panneaux:"expertPanneaux", voyants:"expertVoyants", mecanique:"mecanicien", documents:"expertBenin"}[c];
+    if(p.total>=10 && (p.correct/p.total)>=0.9 && !state.badges.has(key)){ state.badges.add(key); newBadges.push(key); }
+  });
+
+  state.quizzesCompleted++;
+  if(state.quizzesCompleted===5 && !state.badges.has("marathonien")){ state.badges.add("marathonien"); newBadges.push("marathonien"); }
+
+  gainXp(bonusXp);
+  if(newBadges.length) playSfx("badge");
+
+  const timeUsedSec = quiz.timed ? (quiz.timeLimit - Math.max(quiz.timeLeft,0)) : Math.round((Date.now()-quiz.startedAt)/1000);
+
+  state.history.unshift({
+    mode:quiz.mode, label:quiz.title, date:formatDate(new Date()),
+    correct:quiz.correctCount, total, pct, xp: (quiz.correctCount*(quiz.mode==="exam"?4:10))+bonusXp
+  });
+
+  renderResults(pct, bonusXp, newBadges, timeUsedSec);
+  switchScreen("screen-results");
+  quizFinishedFlag = false;
+}
+
+/* ---------- 6b. CHAPITRES FAIBLES / MAÎTRISE ---------- */
+function getCategoryStats(){
+  return Object.keys(CATEGORIES).map(key=>{
+    const p = state.categoryProgress[key];
+    const pct = p.total ? Math.round((p.correct/p.total)*100) : null;
+    return { key, label:CATEGORIES[key].label, icon:CATEGORIES[key].icon, total:p.total, pct };
+  });
+}
+function getWeakCategories(){
+  return getCategoryStats().filter(c=>c.total>=3 && c.pct<75).sort((a,b)=>a.pct-b.pct);
+}
+function recommendationText(weak){
+  if(weak.length===0) return "Tes résultats sont solides dans tous les thèmes travaillés. Continue avec le mode Examen pour te chronométrer en conditions réelles.";
+  const names = weak.slice(0,2).map(w=>w.label).join(" et ");
+  return `Concentre ton prochain entraînement sur : ${names}. Reprends ces thèmes en mode Entraînement pour consolider tes acquis avant l'examen.`;
+}
+
+function renderResults(pct, bonusXp, newBadges, timeUsedSec){
+  const examExtra = document.getElementById("examExtra");
+  examExtra.innerHTML = "";
+  if(quiz.mode==="exam"){
+    const mm = Math.floor(timeUsedSec/60), ss = timeUsedSec%60;
+    const weak = getWeakCategories();
+    let weakHtml = weak.length ? weak.map(w=>`
+      <div class="weak-item">
+        <span class="wc-icon">${w.icon}</span>
+        <div class="wc-info"><div class="wc-name">${w.label}</div><div class="wc-bar"><div class="wc-fill" style="width:${w.pct}%"></div></div></div>
+        <span class="wc-pct">${w.pct}%</span>
+      </div>`).join("") : `<div class="empty-state" style="padding:14px 0;">Aucun chapitre faible détecté 👍</div>`;
+    examExtra.innerHTML = `
+      <div class="result-stats" style="grid-template-columns:1fr;">
+        <div class="rstat" style="text-align:left; display:flex; justify-content:space-between; align-items:center;">
+          <span class="l" style="margin:0;">Temps utilisé</span>
+          <span class="v mono" style="font-size:15px;">${String(mm).padStart(2,"0")}:${String(ss).padStart(2,"0")}</span>
+        </div>
+      </div>
+      <div class="section-title">Chapitres faibles</div>
+      ${weakHtml}
+      <div class="reco-box"><b>Recommandation</b>${recommendationText(weak)}</div>`;
+  }
+  document.getElementById("scoreCircle").style.setProperty("--pct", pct);
+  document.getElementById("scoreNum").innerHTML = `${pct}%<small>Réussite</small>`;
+  let title, sub;
+  if(quiz.mode==="exam"){
+    title = pct>=70 ? "Examen réussi 🎉" : "Examen non validé";
+    sub = pct>=70 ? "Tu passerais l'épreuve officielle avec ce score." : "Il faut au moins 70% pour valider. Continue à t'entraîner !";
+  } else if(quiz.mode==="daily"){
+    title = "Défi du jour terminé"; sub = "Reviens demain pour un nouveau défi.";
+  } else {
+    title = pct>=70 ? "Bien joué !" : "Continue à t'entraîner";
+    sub = CATEGORIES[quiz.category] ? `Thème : ${CATEGORIES[quiz.category].label}` : "";
+  }
+  document.getElementById("resultTitle").textContent = title;
+  document.getElementById("resultSub").textContent = sub;
+  document.getElementById("rGood").textContent = quiz.correctCount;
+  document.getElementById("rBad").textContent = quiz.wrongCount;
+  document.getElementById("rXp").textContent = "+" + ((quiz.correctCount*(quiz.mode==="exam"?4:10))+bonusXp);
+
+  const badgesWrap = document.getElementById("newBadges");
+  badgesWrap.innerHTML = "";
+  newBadges.forEach(id=>{
+    const b = BADGES[id];
+    const div = document.createElement("div");
+    div.className = "badge-earned";
+    div.innerHTML = `<span class="em">${b.em}</span><div><div class="t">Badge débloqué : ${b.name}</div><div class="d">${b.desc}</div></div>`;
+    badgesWrap.appendChild(div);
+  });
+
+  const retryBtn = document.getElementById("retryBtn");
+  retryBtn.onclick = ()=> startQuiz(quiz.mode, quiz.category);
+
+  const list = document.getElementById("correctionList");
+  list.innerHTML = `<div class="section-title">Corrigé détaillé</div>`;
+  quiz.answers.forEach((a,i)=>{
+    const div = document.createElement("div");
+    div.className = "correction-item";
+    const yourTxt = a.selected.length ? a.selected.map(idx=>a.q.options[idx]).join(", ") : "Aucune réponse";
+    const rightTxt = a.q.correct.map(idx=>a.q.options[idx]).join(", ");
+    div.innerHTML = `
+      <div class="qtxt">${i+1}. ${a.q.prompt}</div>
+      ${a.correct ? "" : `<div class="line your">✗ Ta réponse : ${yourTxt}</div>`}
+      <div class="line right">✓ Réponse correcte : ${rightTxt}</div>`;
+    list.appendChild(div);
+  });
+}
+
+/* ---------- 6. XP / RANG ---------- */
+function currentRank(){
+  let r = RANKS[0];
+  for(const rk of RANKS){ if(state.xp>=rk.min) r = rk; }
+  return r;
+}
+function nextRank(){
+  for(const rk of RANKS){ if(rk.min>state.xp) return rk; }
+  return null;
+}
+function gainXp(amount){
+  if(amount<=0) return;
+  const rankBefore = currentRank();
+  state.xp += amount;
+  showToast(`+${amount} XP`);
+  playSfx("xp");
+  const rankAfter = currentRank();
+  if(rankAfter.name !== rankBefore.name){
+    playSfx("levelup");
+    speakLine(VOICE_LINES.levelUp(rankAfter.name));
+    showToast(`Nouveau rang : ${rankAfter.name} !`);
+  }
+  updateTopbar();
+}
+function updateTopbar(){
+  const rank = currentRank(); const nxt = nextRank();
+  const span = nxt ? nxt.min - rank.min : 1;
+  const prog = nxt ? Math.min(100, ((state.xp-rank.min)/span)*100) : 100;
+  document.getElementById("xpFill").style.width = prog+"%";
+  document.getElementById("xpCar").style.left = prog+"%";
+  document.getElementById("xpLabel").textContent = `${state.xp} XP · ${rank.name}`;
+  document.getElementById("gaugeRank").textContent = rank.name;
+  document.getElementById("gaugeXp").textContent = `${state.xp} XP`;
+  document.getElementById("gaugeCar").style.left = `calc(6% + ${prog*0.86}%)`;
+  const dailyStatus = document.getElementById("dailyStatus");
+  dailyStatus.textContent = state.dailyDoneDate===todayKey() ? "Déjà complété aujourd'hui ✓" : "10 questions bonus";
+  updateHomeStats();
+}
+
+/* ---------- 7. NAVIGATION ---------- */
+function switchScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  const map = {"screen-home":"home","screen-categories":"cat","screen-quiz":"exam","screen-stats":"profile","screen-profile":"profile","screen-learn":"learn","screen-course":"learn","screen-simulation":"sim","screen-admin":null,"screen-admin-questions":null,"screen-coach":"profile","screen-leaderboard":"profile"};
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  const navKey = id==="screen-quiz" ? (quiz && quiz.mode==="exam" ? "exam":"cat") : map[id];
+  const btn = document.querySelector(`.nav-btn[data-nav="${navKey}"]`);
+  if(btn) btn.classList.add("active");
+  window.scrollTo(0,0);
+}
+function goHome(){ clearInterval(examTimerInterval); clearInterval(simTimerInterval); switchScreen("screen-home"); updateTopbar(); }
+
+function updateHomeStats(){
+  const catCount = Object.keys(CATEGORIES).length;
+  const qCount = Object.keys(QUESTIONS).reduce((sum,c)=> sum + QUESTIONS[c].length, 0);
+  const badgeCount = state.badges.size;
+  const elCat = document.getElementById("statCatCount");
+  const elQ = document.getElementById("statQCount");
+  const elB = document.getElementById("statBadgeCount");
+  if(elCat) elCat.textContent = catCount;
+  if(elQ) elQ.textContent = qCount;
+  if(elB) elB.textContent = badgeCount + " / " + Object.keys(BADGES).length;
+}
+
+function showAdmin(){
+  playSfx("click");
+  const grid = document.getElementById("adminContentGrid");
+  if(grid){
+    grid.innerHTML = "";
+    Object.keys(CATEGORIES).forEach(c=>{
+      const box = document.createElement("div");
+      box.className = "stat-box";
+      box.innerHTML = `<div class="v">${QUESTIONS[c].length}</div><div class="l">${CATEGORIES[c].label}</div>`;
+      grid.appendChild(box);
+    });
+  }
+  switchScreen("screen-admin");
+}
+
+/* ---------- ADMIN — GESTION DES QUESTIONS (CRUD en mémoire) ---------- */
+function showAdminQuestions(){
+  playSfx("click");
+  const sel = document.getElementById("adminCatSelect");
+  if(sel.options.length===0){
+    Object.entries(CATEGORIES).forEach(([key,c])=>{
+      const opt = document.createElement("option");
+      opt.value = key; opt.textContent = c.label;
+      sel.appendChild(opt);
+    });
+  }
+  renderAdminQuestionList();
+  switchScreen("screen-admin-questions");
+}
+function renderAdminQuestionList(){
+  const cat = document.getElementById("adminCatSelect").value;
+  const wrap = document.getElementById("adminQuestionList");
+  wrap.innerHTML = "";
+  QUESTIONS[cat].forEach((q,idx)=>{
+    const div = document.createElement("div");
+    div.className = "weak-item"; div.style.alignItems = "flex-start";
+    div.innerHTML = `<div class="wc-info"><div class="wc-name" style="white-space:normal;">${q.prompt}</div></div>
+      <button class="icon-btn" style="border-color:rgba(255,17,17,.4);" onclick="adminDeleteQuestion('${cat}',${idx})">🗑️</button>`;
+    wrap.appendChild(div);
+  });
+  if(QUESTIONS[cat].length===0) wrap.innerHTML = `<div class="empty-state">Aucune question dans ce thème.</div>`;
+}
+function adminDeleteQuestion(cat, idx){
+  if(!confirm("Supprimer cette question ?")) return;
+  QUESTIONS[cat].splice(idx,1);
+  renderAdminQuestionList();
+  showToast("Question supprimée");
+}
+function adminAddQuestion(){
+  const cat = document.getElementById("adminCatSelect").value;
+  const prompt = document.getElementById("aqPrompt").value.trim();
+  const opts = [0,1,2,3].map(i=>document.getElementById("aqOpt"+i).value.trim()).filter(Boolean);
+  const correct = [0,1,2,3].filter(i=>document.getElementById("aqCorrect"+i).checked && document.getElementById("aqOpt"+i).value.trim());
+  const explain = document.getElementById("aqExplain").value.trim();
+  if(!prompt || opts.length<2 || correct.length===0){
+    showToast("Champs manquants"); return;
+  }
+  QUESTIONS[cat].push({ prompt, options:opts, correct, explain:explain||"" });
+  ["aqPrompt","aqOpt0","aqOpt1","aqOpt2","aqOpt3","aqExplain"].forEach(id=>document.getElementById(id).value="");
+  [0,1,2,3].forEach(i=>document.getElementById("aqCorrect"+i).checked=false);
+  renderAdminQuestionList();
+  updateHomeStats();
+  showToast("Question ajoutée");
+}
+
+function adminResetProgress(){
+  if(!confirm("Réinitialiser toute la progression (XP, badges, historique) ?")) return;
+  state.xp = 0;
+  state.streak = 0; state.bestStreak = 0;
+  state.categoryProgress = {};
+  Object.keys(CATEGORIES).forEach(c => state.categoryProgress[c] = {correct:0,total:0});
+  state.badges = new Set();
+  state.history = [];
+  state.quizzesCompleted = 0;
+  state.dailyDoneDate = null;
+  state.masteredQuestions = new Set();
+  updateTopbar();
+  updateHomeStats();
+  showToast("Progression réinitialisée");
+}
+function showCategories(){
+  playSfx("click");
+  const wrap = document.getElementById("catList");
+  wrap.innerHTML = "";
+  Object.entries(CATEGORIES).forEach(([key,c])=>{
+    const p = state.categoryProgress[key];
+    const pct = p.total ? Math.round((p.correct/p.total)*100) : 0;
+    const div = document.createElement("button");
+    div.className = "cat-item"; div.style.cssText="width:100%;border:1px solid #000;";
+    div.onclick = ()=> startQuiz("training", key);
+    div.innerHTML = `
+      <div class="badge-shape" style="background:${c.accent}22; color:${c.accent};">${c.icon}</div>
+      <div class="info">
+        <div class="name">${c.label}</div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%; background:${c.accent};"></div></div>
+        <div class="prog-txt">${p.total ? `${pct}% de réussite · ${p.total} question(s) faites` : "Pas encore commencé"}</div>
+      </div>
+      <div class="go">›</div>`;
+    wrap.appendChild(div);
+  });
+  switchScreen("screen-categories");
+}
+
+/* ---------- APPRENDRE ---------- */
+function showLearn(){
+  playSfx("click");
+  const wrap = document.getElementById("learnList");
+  wrap.innerHTML = "";
+  Object.entries(CATEGORIES).forEach(([key,c])=>{
+    const p = state.categoryProgress[key];
+    const pct = p.total ? Math.round((p.correct/p.total)*100) : 0;
+    const div = document.createElement("button");
+    div.className = "cat-item"; div.style.cssText="width:100%;border:1px solid #000;";
+    div.onclick = ()=> showCourse(key);
+    div.innerHTML = `
+      <div class="badge-shape" style="background:${c.accent}22; color:${c.accent};">${c.icon}</div>
+      <div class="info">
+        <div class="name">${c.label}</div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%; background:${c.accent};"></div></div>
+        <div class="prog-txt">${QUESTIONS[key].length} question(s) associées</div>
+      </div>
+      <div class="go">›</div>`;
+    wrap.appendChild(div);
+  });
+  switchScreen("screen-learn");
+}
+let currentCourseKey = null;
+function showCourse(key){
+  playSfx("click");
+  currentCourseKey = key;
+  const c = CATEGORIES[key], course = COURSES[key];
+  document.getElementById("courseTitle").textContent = course.title;
+  document.getElementById("courseSub").textContent = c.label;
+  document.getElementById("courseBody").textContent = course.text;
+  switchScreen("screen-course");
+}
+function listenCourse(){
+  if(!currentCourseKey) return;
+  speak(COURSES[currentCourseKey].text);
+}
+function startCourseQuiz(){
+  if(!currentCourseKey) return;
+  startQuiz("training", currentCourseKey);
+}
+
+/* ---------- COACH INTELLIGENT ---------- */
+function showCoach(){
+  playSfx("click");
+  const analysisWrap = document.getElementById("coachAnalysis");
+  const recoWrap = document.getElementById("coachReco");
+  const stats = getCategoryStats();
+  let rows = "";
+  stats.forEach(c=>{
+    const pct = c.pct;
+    const color = pct===null ? 'var(--gris)' : (pct>=75?'var(--vert)':pct>=50?'var(--signal)':'var(--rouge)');
+    rows += `<div class="weak-item">
+      <span class="wc-icon">${c.icon}</span>
+      <div class="wc-info">
+        <div class="wc-name">${c.label}</div>
+        <div class="wc-bar"><div class="wc-fill" style="width:${pct===null?0:pct}%; background:${color};"></div></div>
+      </div>
+      <span class="wc-pct" style="color:${color};">${pct===null?"—":pct+"%"}</span>
+    </div>`;
+  });
+  analysisWrap.innerHTML = `<div class="section-title">Analyse de votre niveau</div>${rows}`;
+  const weak = getWeakCategories();
+  if(weak.length===0){
+    recoWrap.innerHTML = `<div class="reco-box"><b>Analyse</b>${recommendationText(weak)}</div>`;
+  } else {
+    const target = weak[0];
+    recoWrap.innerHTML = `<div class="reco-box"><b>Recommandation</b>${recommendationText(weak)}</div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="startQuiz('training','${target.key}')">🎯 Lancer l'entraînement recommandé (${target.label})</button>`;
+  }
+  switchScreen("screen-coach");
+}
+
+/* ---------- CLASSEMENT ---------- */
+function showLeaderboard(){
+  playSfx("click");
+  const rank = currentRank();
+  const totalAnswered = Object.values(state.categoryProgress).reduce((s,p)=>s+p.total,0);
+  const totalCorrect = Object.values(state.categoryProgress).reduce((s,p)=>s+p.correct,0);
+  const pct = totalAnswered ? Math.round((totalCorrect/totalAnswered)*100) : 0;
+  const examsPassed = state.history.filter(h=>h.mode==="exam" && h.pct>=70).length;
+  document.getElementById("leaderboardGrid").innerHTML = `
+    <div class="stat-box"><div class="v">${state.xp}</div><div class="l">XP</div></div>
+    <div class="stat-box"><div class="v">${rank.name}</div><div class="l">Niveau</div></div>
+    <div class="stat-box"><div class="v">${pct}%</div><div class="l">Réussite</div></div>
+    <div class="stat-box"><div class="v">${examsPassed}</div><div class="l">Examens réussis</div></div>`;
+  switchScreen("screen-leaderboard");
+}
+
+function startExam(){ startQuiz("exam"); }
+function startDailyChallenge(){
+  if(state.dailyDoneDate===todayKey()){
+    if(!confirm("Tu as déjà fait le défi du jour. Le refaire ne rapportera pas de badge supplémentaire. Continuer ?")) return;
+  }
+  startQuiz("daily");
+}
+function showStats(){
+  playSfx("click");
+  const grid = document.getElementById("statGrid");
+  const totalAnswered = state.history.reduce((s,h)=>s+h.total,0);
+  const totalCorrect = state.history.reduce((s,h)=>s+h.correct,0);
+  const avg = totalAnswered ? Math.round((totalCorrect/totalAnswered)*100) : 0;
+  grid.innerHTML = `
+    <div class="stat-box"><div class="v">${state.xp}</div><div class="l">XP total</div></div>
+    <div class="stat-box"><div class="v">${state.quizzesCompleted}</div><div class="l">Quiz complétés</div></div>
+    <div class="stat-box"><div class="v">${avg}%</div><div class="l">Moyenne globale</div></div>
+    <div class="stat-box"><div class="v">${state.bestStreak}</div><div class="l">Meilleure série</div></div>
+    <div class="stat-box"><div class="v">${state.masteredQuestions.size}</div><div class="l">Questions maîtrisées</div></div>
+    <div class="stat-box"><div class="v">${state.badges.size}/${Object.keys(BADGES).length}</div><div class="l">Badges débloqués</div></div>`;
+
+  const weak = getWeakCategories();
+  const weakList = document.getElementById("weakList");
+  weakList.innerHTML = weak.length ? weak.map(w=>`
+    <div class="weak-item">
+      <span class="wc-icon">${w.icon}</span>
+      <div class="wc-info"><div class="wc-name">${w.label}</div><div class="wc-bar"><div class="wc-fill" style="width:${w.pct}%"></div></div></div>
+      <span class="wc-pct">${w.pct}%</span>
+    </div>`).join("") : `<div class="empty-state" style="padding:16px 0;">Entraîne-toi dans au moins 3 questions par thème pour voir apparaître tes points faibles ici.</div>`;
+
+  const hist = document.getElementById("historyList");
+  if(state.history.length===0){
+    hist.innerHTML = `<div class="empty-state">Aucun quiz réalisé pour l'instant.<br>Lance un entraînement pour commencer !</div>`;
+  } else {
+    hist.innerHTML = "";
+    state.history.forEach(h=>{
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.innerHTML = `<div><div class="h-cat">${h.label}</div><div class="h-date">${h.date}</div></div><div class="h-score">${h.pct}%</div>`;
+      hist.appendChild(div);
+    });
+  }
+  switchScreen("screen-stats");
+}
+function playerLevel(){ return Math.floor(state.xp/150) + 1; }
+function showProfile(){
+  playSfx("click");
+  const rank = currentRank(); const nxt = nextRank();
+  document.getElementById("profileRankIcon").textContent = rank.icon;
+  document.getElementById("profileRankName").textContent = rank.name;
+
+  document.getElementById("lcLevel").textContent = `Niveau ${playerLevel()}`;
+  document.getElementById("lcRank").textContent = rank.name;
+  const span = nxt ? nxt.min - rank.min : 1;
+  const prog = nxt ? Math.min(100, ((state.xp-rank.min)/span)*100) : 100;
+  document.getElementById("lcFill").style.width = prog+"%";
+  document.getElementById("lcXpFrac").textContent = nxt ? `${state.xp} / ${nxt.min} XP` : `${state.xp} XP · rang maximum`;
+  document.getElementById("lcStreak").textContent = `🔥 ${state.streak}`;
+
+  const totalAnswered = state.history.reduce((s,h)=>s+h.total,0);
+  const totalCorrect = state.history.reduce((s,h)=>s+h.correct,0);
+  const avg = totalAnswered ? Math.round((totalCorrect/totalAnswered)*100) : 0;
+  document.getElementById("profileStatGrid").innerHTML = `
+    <div class="stat-box"><div class="v">${avg}%</div><div class="l">Taux de réussite</div></div>
+    <div class="stat-box"><div class="v">${state.masteredQuestions.size}</div><div class="l">Questions maîtrisées</div></div>`;
+
+  const grid = document.getElementById("badgesGrid");
+  grid.innerHTML = "";
+  Object.entries(BADGES).forEach(([id,b])=>{
+    const unlocked = state.badges.has(id);
+    const div = document.createElement("div");
+    div.className = "badge-tile" + (unlocked?" unlocked":"");
+    div.innerHTML = `<span class="em">${b.em}</span><div class="t">${b.name}</div>`;
+    div.title = b.desc;
+    grid.appendChild(div);
+  });
+  switchScreen("screen-profile");
+}
+
+/* ---------- 7b. RÉGLAGES AUDIO ---------- */
+function showSettings(){
+  ensureAudioCtx();
+  ["voice","sfx","music","timerSound"].forEach(key=>{
+    const el = document.getElementById("sw-"+key);
+    el.classList.toggle("on", !!state.settings[key]);
+  });
+  document.getElementById("volumeRange").value = Math.round(state.settings.volume*100);
+  document.getElementById("volLabel").textContent = Math.round(state.settings.volume*100)+"%";
+  switchScreen("screen-settings");
+}
+function toggleSetting(key){
+  state.settings[key] = !state.settings[key];
+  document.getElementById("sw-"+key).classList.toggle("on", state.settings[key]);
+  updateVoiceButton();
+  if(key==="music") toggleMusic(state.settings.music);
+  if(key==="sfx" && state.settings.sfx) playSfx("click");
+  if(key==="voice" && state.settings.voice) speak("Voix activée.");
+}
+function setVolume(v){
+  state.settings.volume = v/100;
+  document.getElementById("volLabel").textContent = v+"%";
+  if(musicGain) musicGain.gain.value = 0.02*state.settings.volume;
+}
+function updateVoiceButton(){
+  const btn = document.getElementById("voiceToggleBtn");
+  btn.textContent = state.settings.voice ? "🔊" : "🔇";
+  btn.classList.toggle("muted", !state.settings.voice);
+}
+function toggleVoiceQuick(){
+  state.settings.voice = !state.settings.voice;
+  updateVoiceButton();
+  if(state.settings.voice) speak("Voix activée.");
+  playSfx("click");
+}
+
+/* ---------- 7c. MODE SIMULATION ----------
+   Situations de conduite immersives : le joueur doit réagir vite,
+   avant la fin du temps imparti, comme dans une vraie scène de circulation. */
+const SIMULATION_EVENTS = [
+  { scene:"scene-feu",          emoji:"🛑", caption:"Feu rouge devant vous",
+    prompt:"Le feu est rouge à l'approche du carrefour.", options:["S'arrêter avant la ligne","Accélérer pour passer","Klaxonner et continuer"], correct:0, time:6 },
+  { scene:"scene-intersection",  emoji:"🚗➡️", caption:"Panneau STOP à l'intersection",
+    prompt:"Un panneau STOP apparaît devant vous.", options:["Ralentir sans s'arrêter","Marquer un arrêt complet","Accélérer, la voie semble libre"], correct:1, time:6 },
+  { scene:"scene-route",         emoji:"🚶", caption:"Un piéton s'engage sur la chaussée",
+    prompt:"Un piéton traverse sur un passage non protégé.", options:["Ralentir et le laisser traverser","Accélérer avant qu'il traverse","L'ignorer, il n'a pas la priorité"], correct:0, time:5 },
+  { scene:"scene-rondpoint",     emoji:"🔄", caption:"Entrée dans un rond-point",
+    prompt:"Vous arrivez à l'entrée d'un rond-point.", options:["Entrer sans regarder","Céder le passage aux véhicules déjà engagés","Klaxonner pour entrer en premier"], correct:1, time:6 },
+  { scene:"scene-route",         emoji:"🚙", caption:"Le véhicule devant vous ralentit",
+    prompt:"Le véhicule qui vous précède ralentit brusquement.", options:["Freiner progressivement en gardant vos distances","Doubler immédiatement sans visibilité","Klaxonner et coller le véhicule"], correct:0, time:5 },
+  { scene:"scene-route",         emoji:"🪨", caption:"Obstacle sur la chaussée",
+    prompt:"Un obstacle apparaît soudainement sur la route.", options:["Freiner et contourner prudemment si possible","Rouler dessus sans ralentir","Faire une embardée sans vérifier les côtés"], correct:0, time:5 },
+  { scene:"scene-route",         emoji:"🚫↷", caption:"Zone de dépassement interdit",
+    prompt:"Vous êtes dans une zone où le dépassement est interdit.", options:["Doubler quand même si la voie semble libre","Rester derrière le véhicule jusqu'à la fin de la zone","Klaxonner pour faire accélérer le véhicule devant"], correct:1, time:6 },
+  { scene:"scene-intersection",  emoji:"↪️", caption:"Changement de direction à venir",
+    prompt:"Vous devez tourner à la prochaine intersection.", options:["Tourner sans prévenir","Mettre le clignotant à l'avance et vérifier les rétroviseurs","Ralentir brutalement sans signaler"], correct:1, time:6 },
+  { scene:"scene-pluie",         emoji:"🌧️", caption:"Chaussée mouillée",
+    prompt:"Il pleut fort et la chaussée est glissante.", options:["Garder la même vitesse qu'en temps sec","Réduire la vitesse et augmenter les distances","Accélérer pour sortir de la zone de pluie"], correct:1, time:6 },
+  { scene:"scene-nuit",          emoji:"🌙", caption:"Croisement de nuit",
+    prompt:"Un véhicule arrive en face, de nuit, en feux de route.", options:["Garder vos feux de route","Passer en feux de croisement","Éteindre tous vos feux"], correct:1, time:6 },
+];
+
+let sim = null;
+let simTimerInterval = null;
+
+function startSimulation(){
+  playSfx("click");
+  sim = { events:shuffle(SIMULATION_EVENTS).slice(0,8), idx:0, score:0, lives:3, answered:false };
+  switchScreen("screen-simulation");
+  if(state.settings.voice){
+    speakLine(VOICE_LINES.welcomeSim);
+    setTimeout(renderSimEvent, 1900);
+  } else {
+    renderSimEvent();
+  }
+}
+
+function renderSimEvent(){
+  const ev = sim.events[sim.idx];
+  sim.answered = false;
+  sim.timeLeft = ev.time;
+
+  document.getElementById("simSub").textContent = `Situation ${sim.idx+1} / ${sim.events.length}`;
+  document.getElementById("simLives").innerHTML = "❤️".repeat(sim.lives) + "🖤".repeat(3-sim.lives);
+
+  const scene = document.getElementById("simScene");
+  scene.className = "sim-scene " + ev.scene;
+  let rain = "";
+  if(ev.scene==="scene-pluie"){
+    for(let i=0;i<14;i++) rain += `<div class="rain-drop" style="left:${Math.random()*100}%; animation-delay:${Math.random()}s;"></div>`;
+  }
+  scene.innerHTML = `${rain}<div class="sim-emoji">${ev.emoji}</div><div class="sim-caption">${ev.caption}</div><div class="road-strip"></div>`;
+
+  document.getElementById("simFeedback").className = "feedback-banner";
+  document.getElementById("simFeedback").innerHTML = "";
+
+  const optWrap = document.getElementById("simOptions");
+  optWrap.innerHTML = "";
+  ev.options.forEach((opt,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "option"; btn.type = "button";
+    btn.textContent = opt;
+    btn.onclick = ()=> answerSim(i);
+    optWrap.appendChild(btn);
+  });
+
+  speak(ev.prompt);
+
+  clearInterval(simTimerInterval);
+  const fill = document.getElementById("simTimerFill");
+  fill.style.width = "100%";
+  const totalMs = ev.time*1000;
+  const startTs = Date.now();
+  simTimerInterval = setInterval(()=>{
+    const elapsed = Date.now()-startTs;
+    const pct = Math.max(0, 100 - (elapsed/totalMs)*100);
+    fill.style.width = pct+"%";
+    if(elapsed>=totalMs){
+      clearInterval(simTimerInterval);
+      if(!sim.answered) answerSim(-1);
+    }
+  },80);
+}
+
+function answerSim(choiceIdx){
+  if(sim.answered) return;
+  sim.answered = true;
+  clearInterval(simTimerInterval);
+  const ev = sim.events[sim.idx];
+  const isCorrect = choiceIdx===ev.correct;
+  const timedOut = choiceIdx===-1;
+
+  document.querySelectorAll("#simOptions .option").forEach((el,idx)=>{
+    el.disabled = true;
+    if(idx===ev.correct) el.classList.add("correct");
+    else if(idx===choiceIdx) el.classList.add("wrong");
+  });
+
+  const banner = document.getElementById("simFeedback");
+  if(isCorrect){
+    sim.score++;
+    playSfx("correct"); speakLine(VOICE_LINES.simCorrect);
+    banner.className = "feedback-banner show ok";
+    banner.innerHTML = "<b>Bonne décision</b>Tu as réagi correctement à cette situation.";
+  } else {
+    sim.lives--;
+    playSfx("wrong");
+    speakLine(timedOut ? VOICE_LINES.simTimeout : VOICE_LINES.simWrong);
+    banner.className = "feedback-banner show ko";
+    banner.innerHTML = `<b>${timedOut?"Trop lent":"Mauvaise décision"}</b>La bonne réaction était : ${ev.options[ev.correct]}.`;
+  }
+
+  setTimeout(()=>{
+    if(sim.lives<=0){ finishSimulation(); return; }
+    sim.idx++;
+    if(sim.idx>=sim.events.length){ finishSimulation(); return; }
+    renderSimEvent();
+  }, 1400);
+}
+
+function finishSimulation(){
+  const total = sim.idx + (sim.answered?1:0);
+  const xpGained = sim.score*8;
+  gainXp(xpGained);
+  state.quizzesCompleted++;
+  state.history.unshift({ mode:"simulation", label:"Mode Simulation", date:formatDate(new Date()), correct:sim.score, total:sim.events.length, pct:Math.round((sim.score/sim.events.length)*100), xp:xpGained });
+  if(!state.badges.has("premierPas")){ state.badges.add("premierPas"); }
+
+  const scene = document.getElementById("simScene");
+  scene.className = "sim-scene scene-route";
+  scene.innerHTML = `<div class="sim-score-hero"><div class="big">${sim.score}/${sim.events.length}</div><div style="color:var(--gris); font-size:12px; margin-top:6px;">bonnes décisions</div></div>`;
+  document.getElementById("simFeedback").className = "feedback-banner show " + (sim.lives<=0?"ko":"ok");
+  document.getElementById("simFeedback").innerHTML = sim.lives<=0
+    ? "<b>Simulation terminée</b>Tu as perdu toutes tes vies. Retente ta chance pour t'améliorer !"
+    : "<b>Simulation terminée</b>Bravo, tu as tenu jusqu'au bout du parcours.";
+  document.getElementById("simOptions").innerHTML = `<button class="btn btn-primary" style="grid-column:1/-1;" onclick="startSimulation()">Rejouer</button><button class="btn btn-ghost" style="grid-column:1/-1;" onclick="goHome()">Accueil</button>`;
+  document.getElementById("simTimerFill").style.width = "0%";
+}
+
+function confirmQuitSimulation(){
+  if(sim && sim.idx < sim.events.length && sim.lives>0 && !document.getElementById("simOptions").querySelector(".btn-primary")){
+    if(!confirm("Quitter la simulation en cours ?")) return;
+  }
+  clearInterval(simTimerInterval);
+  goHome();
+}
+
+/* ---------- 8. UTILITAIRES ---------- */
+function todayKey(){ const d=new Date(); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+function formatDate(d){ return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); }
+let toastTimeout;
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(()=> t.classList.remove("show"), 1400);
+}
+
+/* ---------- 9. INIT ---------- */
+updateTopbar();
+updateVoiceButton();
+updateHomeStats();
+</script>
+</body>
+</html>
